@@ -1,0 +1,18 @@
+    <canvas id="canvas"></canvas>
+    <script type="module">
+        import init, {julia} from './pkg/project_julia.js';
+
+        // Get a canvas context
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Generate and draw the fractal
+        for (let x = 0; x < canvas.width; x++) {
+            for (let y = 0; y < canvas.height; y++) {
+                const value = julia(-0.8, 0.156, x / canvas.width, y / canvas.height);
+                ctx.fillStyle = `rgb(${value}, ${value}, ${value})`;
+                ctx.fillRect(x, y, 1, 1);
+            }
+        }
+
+    </script>
