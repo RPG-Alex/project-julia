@@ -1,3 +1,22 @@
+# Welcome to Project Julia
+This project has the goal of being able to dynamically render julia sets in the browser using web assembly.
+
+## Purpose
+This project exists to show one application of rust for the web using web assembly. 
+
+## Contributing
+To contriubte simply fork this repo, and when your modifications are complete submit a pull request that clearly details changes and explanation!
+
+## Incomplete Features
+- Render a Julia set in browser 
+- Allow for adjustable inputs to change the output Julia set
+- Ability to zoom into set 
+    - Infinite zoom
+
+
+
+# Installatio and Usage
+
 ## How to install
 
 ```sh
