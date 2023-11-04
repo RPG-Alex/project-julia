@@ -1,67 +1,95 @@
-# Welcome to Project Julia
-This project has the goal of being able to dynamically render julia sets in the browser using web assembly.
+<a name="readme-top"></a>
+
+# Project Julia
+
+<div align="center">
+    <img src="concept.png" alt="Concept Julia Fractal" width="360" height="360">
+</div>
+
+<details>
+    <summary>Contents</summary>
+    <ol>
+        <li>
+            <a href="#purpose">Purpose</a>
+        </li>
+        <li>
+            <a href="#contributing">Contributing</a>
+        </li>
+        <li>
+            <a href="#incomplete-features">Incomplete Features</a>
+        </li>
+        <li>
+            <a href="#installation-and-usage">Installation and Usage</a>
+        </li>
+    </ol>
+</details>
 
 ## Purpose
-This project exists to show one application of rust for the web using web assembly. 
+
+The goal of Project Julia is to dynamically render Julia sets in the browser using WebAssembly, showcasing the application of Rust for web development.
 
 ## Contributing
-To contriubte simply fork this repo, and when your modifications are complete submit a pull request that clearly details changes and explanation!
+
+To contribute, simply fork this repository, make your modifications, and then submit a pull request that clearly details the changes and explanations.
 
 ## Incomplete Features
-- Render a Julia set in browser 
-- Allow for adjustable inputs to change the output Julia set
-- Ability to zoom into set 
-    - Infinite zoom
 
+- [ ] Render a Julia set in the browser.
+- [ ] Allow for adjustable inputs to change the output Julia set.
+- [ ] Ability to zoom into the set.
+    - [ ] Infinite zoom.
+ - [ ] Export generated Julia sets as images.
+ - [ ] Implement different color schemes for rendered Julia sets.
+ - [ ] Add user preferences and settings to customize the rendering.
+ - [ ] Implement keyboard shortcuts for common actions like zooming, panning, and resetting.
+ - [ ] Create a gallery to view and compare multiple Julia sets simultaneously.
+ - [ ] Add the ability to share rendered Julia sets on social media platforms.
+ - [ ] Implement touch and gesture support for mobile devices.
+ - [ ] Provide tooltips and information overlays explaining the mathematics behind Julia sets.
 
+## Installation and Usage
 
-# Installatio and Usage
-
-## How to install
+### How to Install
 
 ```sh
 npm install
 ```
+How to Run
+Debug Mode
 
-## How to run in debug mode
+Builds the project and opens it in a new browser tab. Auto-reloads when the project changes.
 
 ```sh
-# Builds the project and opens it in a new browser tab. Auto-reloads when the project changes.
 npm start
 ```
+Release Mode
 
-## How to build in release mode
+Builds the project and places it into the dist folder.
 
 ```sh
-# Builds the project and places it into the `dist` folder.
 npm run build
 ```
-
-## How to run unit tests
-
+Unit Tests
+Run tests in Firefox
 ```sh
-# Runs tests in Firefox
 npm test -- --firefox
-
-# Runs tests in Chrome
+```
+Run tests in Chrome
+```sh
 npm test -- --chrome
-
-# Runs tests in Safari
+```
+Run tests in Safari
+```sh
 npm test -- --safari
 ```
+Project Structure
 
-## What does each file do?
+   - Cargo.toml contains the standard Rust metadata for dependencies.
+   - package.json contains the standard npm metadata for JavaScript dependencies.
+   - webpack.config.js contains the Webpack configuration.
+   - The js folder contains JavaScript code.
+   - The src folder contains Rust code.
+   - The static folder contains files to be copied into the final build, including an index.html file.
+   - The tests folder contains Rust unit tests.
 
-* `Cargo.toml` contains the standard Rust metadata. You put your Rust dependencies in here. You must change this file with your details (name, description, version, authors, categories)
-
-* `package.json` contains the standard npm metadata. You put your JavaScript dependencies in here. You must change this file with your details (author, name, version)
-
-* `webpack.config.js` contains the Webpack configuration. You shouldn't need to change this, unless you have very special needs.
-
-* The `js` folder contains your JavaScript code (`index.js` is used to hook everything into Webpack, you don't need to change it).
-
-* The `src` folder contains your Rust code.
-
-* The `static` folder contains any files that you want copied as-is into the final build. It contains an `index.html` file which loads the `index.js` file.
-
-* The `tests` folder contains your Rust unit tests.
+<p align="center">[<a href="#readme-top">RETURN TO TOP</a>]</p>
