@@ -2763,7 +2763,7 @@ checksum = "d135ede8821cf6376eb7a64148901e1690b788c11ae94dc297ae917dbc91dc0e"
 
 [[package]]
 name = "project-julia"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bevy",
  "nalgebra",
