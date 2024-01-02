@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, sprite::MaterialMesh2dBundle};
 use nalgebra::{Complex, Normed};
 
 fn main() {
@@ -11,6 +11,19 @@ fn main() {
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
+}
+
+fn update_fractal(mut texture: ResMut<YourTextureType>, window_size: Res<WindowSize>) {
+    let (width, height) = (window_size.width as usize, window_size.height as usize);
+
+    for x in 0..width {
+        for y in 0..height {
+            // Convert screen coordinates to fractal coordinates
+            let (fractal_x, fractal_y) = screen_to_fractal(x, y, width, height);
+            let color = julia(fractal_x, fractal_y);
+            texture.set_pixel(x, y, color);
+        }
+    }
 }
 
 // System to generate and render Julia fractals
