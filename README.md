@@ -25,7 +25,9 @@
 
 This project's purpose is to create a visually captivating and interactive fractal explorer using Rust and the Bevy engine. It focuses on rendering Julia fractals, offering real-time interactions and visualizations.
 
-The original version was implemented with wasm, but I have since moved to bevy, due to the tools available for expanding features and functionalit
+The original version was implemented with wasm, but I have since moved to bevy, due to the tools available for expanding features and functionality.
+
+This project is based off the super simple and fun [tutorial](https://www.youtube.com/watch?v=g4vN2Z0JuZI&ab_channel=timClicks) that [Tim McNamara](https://www.linkedin.com/in/timmcnamaranz/) did. 
 
 ### Goals
 
