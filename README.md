@@ -52,6 +52,7 @@ The primary goal of this project is to explore the capabilities of Rust and Bevy
     - [ ] Create interactive UI elements for fractal manipulation.
 
 - [ ] **Optimization and Enhancement**
+    - [x] Add color to rendering
     - [ ] Add support for different fractal types.
     - [ ] Implement shader-based rendering for complex visual effects.
 

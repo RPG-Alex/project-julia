@@ -8,6 +8,7 @@ fn main() {
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
         .add_systems(Update, update_fractal)
+        .add_systems(Update, zoom_control_system)
         .run();
 }
 
@@ -50,26 +51,44 @@ fn setup(
     ));
 
     commands.insert_resource(FractalTexture(image_handle));
+
+    // Initialize it in your setup function
+    commands.insert_resource(FractalZoom { 
+        scale: 3.0, // Example initial scale
+        center: (-0.8, 0.156), // Example initial center
+    });
+
 }
 
 #[derive(Resource)]
 struct FractalTexture(Handle<Image>);
 
+#[derive(Resource)]
+struct FractalZoom {
+    scale: f64, // Smaller value for closer zoom
+    center: (f64, f64), // Center coordinates of the zoom
+}
+
 fn update_fractal(
     mut images: ResMut<Assets<Image>>,
     fractal_texture: Res<FractalTexture>,
+    fractal_zoom: Res<FractalZoom>,
 ) {
     if let Some(image) = images.get_mut(&fractal_texture.0) {
         let size = image.texture_descriptor.size;
         let width = size.width as usize;
         let height = size.height as usize;
 
+        let scale = fractal_zoom.scale;
+        let center_x = fractal_zoom.center.0;
+        let center_y = fractal_zoom.center.1;
+
         // Generate fractal data for each pixel
         for y in 0..height {
             for x in 0..width {
                 // Map pixel to fractal coordinate space
-                let cx = x as f64 * 3.0 / width as f64 - 1.5;
-                let cy = y as f64 * 3.0 / height as f64 - 1.5;
+                let cx = (x as f64 * scale / width as f64) + center_x - scale / 2.0;
+                let cy = (y as f64 * scale / height as f64) + center_y - scale / 2.0;
                 let c = Complex::new(-0.8, 0.156);
 
                 let value = julia(c, cx, cy);
@@ -87,6 +106,12 @@ fn update_fractal(
         }
     }
 }
+
+fn zoom_control_system(mut fractal_zoom: ResMut<FractalZoom>, time: Res<Time>) {
+    fractal_zoom.scale *= (1.0 - time.delta_seconds() * 0.1) as f64; // Zoom in over time
+    // Optionally, adjust the center as well
+}
+
 
 // Function to map fractal value to RGBA color
 fn map_value_to_color(value: u16) -> (u8, u8, u8, u8) {
