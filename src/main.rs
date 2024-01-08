@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy::ecs::system::Resource;
- use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
+use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use nalgebra::{Complex, Normed};
 
 fn main() {
@@ -90,16 +90,19 @@ fn update_fractal(
 
 // Function to map fractal value to RGBA color
 fn map_value_to_color(value: u16) -> (u8, u8, u8, u8) {
+    let outter = u16::MAX as f64;
     if value == u16::MAX {
-        (0, 0, 0, 255) // Black for points inside the Julia set
+        (255, 255, 255, 255) // White for points inside the Julia set
+    } else if value < (outter * 0.0005) as u16 {
+        (0, 0, 0, 255) // Black for points outside the Julia set
     } else {
         let v = value as u16;
         let (r, g, b) = (
-            ((v * 2) % 256) as u8, // Red varies quickly
-            ((v * 5) % 256) as u8, // Green varies medium
-            ((v * 3) % 256) as u8, // Blue varies slowly
+            ((v * 6) % 256) as u8, // Red 
+            ((v * 10) % 256) as u8, // Green 
+            ((v * 4) % 256) as u8, // Blue 
         );
-        (r, g, b, 255) // Full opacity
+        (r, g, b, 255) 
     }
 }
 
