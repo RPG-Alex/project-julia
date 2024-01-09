@@ -1,4 +1,8 @@
 use bevy::prelude::*;
+use bevy::render::color::Color;
+use bevy::text::TextStyle;
+use bevy::ui::{Style, AlignItems, Interaction};
+use bevy::ui::node_bundles::{ButtonBundle, NodeBundle, TextBundle};
 use bevy::ecs::system::Resource;
 use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use nalgebra::{Complex, Normed};
@@ -6,11 +10,17 @@ use nalgebra::{Complex, Normed};
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_systems(Startup, setup)
-        .add_systems(Update, update_fractal)
-        .add_systems(Update, zoom_control_system)
+        .add_startup_system(setup)
+        .add_startup_system(setup_ui)
+        .add_system(button_interaction_system)
+        .add_system(update_fractal)
+        .insert_resource(FractalZoom { 
+            scale: 3.0,
+            center: (-0.8, 0.156),
+        })
         .run();
 }
+
 
 #[derive(Component)]
 struct FractalMaterial;
@@ -59,6 +69,98 @@ fn setup(
     });
 
 }
+
+
+#[derive(Component)]
+struct ZoomInButton;
+
+#[derive(Component)]
+struct ZoomOutButton;
+
+fn setup_ui(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+) {
+    let font = asset_server.load("fonts/FiraSans-Bold.ttf");
+
+    commands
+    .spawn_bundle(NodeBundle {
+        style: Style {
+            align_items: AlignItems::FlexEnd,
+            // Other style properties...
+            ..Default::default()
+        },
+        color: Color::NONE.into(), // Change to Color
+        ..Default::default()
+    })
+    .with_children(|parent| {
+        parent.spawn_bundle(ButtonBundle {
+            style: Style {
+                // Styling for the button
+                // ...
+            },
+            color: Color::rgb(0.15, 0.15, 0.15).into(),
+            ..Default::default()
+        })
+        .insert(ZoomInButton)
+        .with_children(|parent| {
+            parent.spawn_bundle(TextBundle::from_section(
+                "Zoom In",
+                TextStyle {
+                    font: font.clone(),
+                    font_size: 40.0,
+                    color: Color::WHITE,
+                },
+            ));
+        });
+
+        // Add similar button for zooming out
+        // ...
+    });
+}
+
+// This does not function correctly. 
+fn button_interaction_system(
+    mut interaction_query: Query<
+        (&Interaction, &mut UiColor, &Children, Option<&ZoomInButton>, Option<&ZoomOutButton>),
+        (Changed<Interaction>, With<Button>),
+    >,
+    mut text_query: Query<&mut Text>,
+    mut fractal_zoom: ResMut<FractalZoom>,
+) {
+    for (interaction, mut color, children, zoom_in, zoom_out) in interaction_query.iter_mut() {
+        let mut text = text_query.get_mut(children[0]).unwrap();
+
+        match *interaction {
+            Interaction::Pressed => {
+                text.sections[0].value = if zoom_in.is_some() {
+                    fractal_zoom.scale *= 0.9; // Zoom in
+                    "Zooming In".to_string()
+                } else if zoom_out.is_some() {
+                    fractal_zoom.scale *= 1.1; // Zoom out
+                    "Zooming Out".to_string()
+                } else {
+                    "Pressed".to_string()
+                };
+                *color = UiColor(Color::rgb(0.35, 0.75, 0.35));
+            }
+            Interaction::Hovered => {
+                text.sections[0].value = "Hover".to_string();
+                *color = UiColor(Color::rgb(0.25, 0.25, 0.25));
+            }
+            Interaction::None => {
+                text.sections[0].value = "Button".to_string();
+                *color = UiColor(Color::rgb(0.15, 0.15, 0.15));
+            }
+        }
+    }
+}
+
+
+
+
+
+
 
 #[derive(Resource)]
 struct FractalTexture(Handle<Image>);
