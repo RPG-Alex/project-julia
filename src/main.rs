@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::render::color::Color;
 use bevy::text::TextStyle;
-use bevy::ui::{Style, AlignItems, Interaction};
+use bevy::ui::{Style, Interaction};
 use bevy::ui::node_bundles::{ButtonBundle, NodeBundle, TextBundle};
 use bevy::ecs::system::Resource;
 use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
@@ -25,7 +25,6 @@ struct FractalMaterial;
 
 fn setup(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     mut images: ResMut<Assets<Image>>,
 ) {
@@ -35,7 +34,7 @@ fn setup(
         height: size.y as u32,
         depth_or_array_layers: 1,
     };
-    let mut image = Image::new_fill(
+    let image = Image::new_fill(
         extent,
         TextureDimension::D2,
         &[0, 0, 0, 0],
@@ -77,7 +76,6 @@ struct ZoomOutButton;
 
 fn setup_ui(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
 ) {
 
     commands
@@ -140,20 +138,15 @@ fn button_interaction_system(
     mut text_query: Query<&mut Text>,
     mut fractal_zoom: ResMut<FractalZoom>,
 ) {
-    for (interaction, mut background_color, children, zoom_in, zoom_out) in interaction_query.iter_mut() {
-        let mut text = text_query.get_mut(children[0]).unwrap();
+    for (interaction, mut background_color, zoom_in, zoom_out) in interaction_query.iter_mut() {
 
         match *interaction {
             Interaction::Pressed => {
-                text.sections[0].value = if zoom_in.is_some() {
+                if zoom_in.is_some() {
                     fractal_zoom.scale *= 0.9; // Zoom in
-                    fractal_zoom.scale.to_string()
                 } else if zoom_out.is_some() {
                     fractal_zoom.scale *= 1.1; // Zoom out
-                    fractal_zoom.scale.to_string()
-                } else {
-                    "ERROR".to_string()
-                };
+                } ;
                 *background_color = BackgroundColor(Color::rgb(0.35, 0.75, 0.35));
             }
             _ => {
@@ -174,8 +167,8 @@ struct FractalTexture(Handle<Image>);
 
 #[derive(Resource)]
 struct FractalZoom {
-    scale: f64, // Smaller value for closer zoom
-    center: (f64, f64), // Center coordinates of the zoom
+    scale: f64,
+    center: (f64, f64), 
 }
 
 fn update_fractal(
@@ -214,11 +207,6 @@ fn update_fractal(
             }
         }
     }
-}
-
-fn zoom_control_system(mut fractal_zoom: ResMut<FractalZoom>, time: Res<Time>) {
-    fractal_zoom.scale *= (1.0 - time.delta_seconds() * 0.1) as f64; // Zoom in over time
-    // Optionally, adjust the center as well
 }
 
 
