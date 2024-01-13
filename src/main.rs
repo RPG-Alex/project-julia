@@ -138,7 +138,7 @@ fn button_interaction_system(
     mut text_query: Query<&mut Text>,
     mut fractal_zoom: ResMut<FractalZoom>,
 ) {
-    for (interaction, mut background_color, zoom_in, zoom_out) in interaction_query.iter_mut() {
+    for (interaction, mut background_color, _, zoom_in, zoom_out) in interaction_query.iter_mut() {
 
         match *interaction {
             Interaction::Pressed => {
