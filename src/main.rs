@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 use bevy::render::color::Color;
 use bevy::text::TextStyle;
-use bevy::ui::{Style, Interaction};
-use bevy::ui::node_bundles::{ButtonBundle, NodeBundle, TextBundle};
+use bevy::ui::{node_bundles::{ButtonBundle, NodeBundle, TextBundle}, Style, Interaction};
 use bevy::ecs::system::Resource;
 use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use nalgebra::{Complex, Normed};
+use rayon::prelude::*;
 
 fn main() {
     App::new()
@@ -135,7 +135,6 @@ fn button_interaction_system(
         (&Interaction, &mut BackgroundColor, &Children, Option<&ZoomInButton>, Option<&ZoomOutButton>),
         (Changed<Interaction>, With<Button>),
     >,
-    mut text_query: Query<&mut Text>,
     mut fractal_zoom: ResMut<FractalZoom>,
 ) {
     for (interaction, mut background_color, _, zoom_in, zoom_out) in interaction_query.iter_mut() {
@@ -181,12 +180,14 @@ fn update_fractal(
         let width = size.width as usize;
         let height = size.height as usize;
 
+
+
         let scale = fractal_zoom.scale;
         let center_x = fractal_zoom.center.0;
         let center_y = fractal_zoom.center.1;
 
-        // Generate fractal data for each pixel
-        for y in 0..height {
+        // Process in chunks using rayon in parallel!
+        image.data.par_chunks_mut(width * 4).enumerate().for_each(|(y, row)| {
             for x in 0..width {
                 // Map pixel to fractal coordinate space
                 let cx = (x as f64 * scale / width as f64) + center_x - scale / 2.0;
@@ -199,13 +200,13 @@ fn update_fractal(
                 let color = map_value_to_color(value);
 
                 // Update image data
-                let offset = (y * width + x) * 4;
-                image.data[offset] = color.0;
-                image.data[offset + 1] = color.1;
-                image.data[offset + 2] = color.2;
-                image.data[offset + 3] = color.3;
+                let offset = x * 4;
+                row[offset] = color.0;
+                row[offset + 1] = color.1;
+                row[offset + 2] = color.2;
+                row[offset + 3] = color.3;
             }
-        }
+        });
     }
 }
 
