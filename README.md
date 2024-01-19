@@ -44,8 +44,8 @@ The primary goal of this project is to explore the capabilities of Rust and Bevy
 - [ ] **Fractal Generation using Rust**
     - [x] Implement Julia fractal generation.
     - [ ] Optimize fractal generation for performance.
-    - [ ] Implement 'Zoom' functionlity
-    	    - [ ] Implement 'infinite zoom' functionality.
+    - [ ] Implement 'infinite zoom' functionality.
+        - [x] Implement 'Zoom' functionlity
 
 - [ ] **Integration with Bevy Engine**
     - [x] Setup Bevy to handle real-time rendering.
@@ -55,6 +55,9 @@ The primary goal of this project is to explore the capabilities of Rust and Bevy
     - [x] Add color to rendering
     - [ ] Add support for different fractal types.
     - [ ] Implement shader-based rendering for complex visual effects.
+
+- [x] **Web Assembly**
+    - [x] Setup application to compile to wasm and run in browser
 
 ### Additional Features
 
