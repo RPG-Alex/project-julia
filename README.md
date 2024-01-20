@@ -63,6 +63,7 @@ The primary goal of this project is to explore the capabilities of Rust and Bevy
 
 - [ ] **User Interaction**
     - [ ] Implement zoom and navigation within fractal space.
+        - [x] Implement click to navigate.
     - [ ] Allow users to modify fractal parameters in real-time.
 
 - [ ] **Educational Content**

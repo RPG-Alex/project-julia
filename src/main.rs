@@ -4,6 +4,7 @@ use bevy::text::TextStyle;
 use bevy::ui::{node_bundles::{ButtonBundle, NodeBundle, TextBundle}, Style, Interaction};
 use bevy::ecs::system::Resource;
 use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
+use bevy::window::Window;
 use nalgebra::{Complex, Normed};
 use rayon::prelude::*;
 
@@ -11,7 +12,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, (setup, setup_ui))
-        .add_systems(Update, (update_fractal, button_interaction_system))
+        .add_systems(Update, (update_fractal, button_interaction_system, click_to_center))
         .insert_resource(FractalZoom { 
             scale: 3.0,
             center: (-0.8, 0.156),
@@ -155,6 +156,25 @@ fn button_interaction_system(
     }
 }
 
+fn click_to_center(
+    mut fractal_zoom: ResMut<FractalZoom>,
+    mut windows: Query<&Window>,
+    mouse_click: Res<Input<MouseButton>>,
+) {
+    if let Some(window) = windows.iter().next() {
+        if mouse_click.just_pressed(MouseButton::Left) {
+            if let Some(cursor_position) = window.cursor_position() {
+                // Convert cursor position to fractal coordinates
+                let size = Vec2::new(window.width() as f32, window.height() as f32);
+                let fractal_x = (cursor_position.x as f64 - (size.x as f64) / 2.0) * fractal_zoom.scale / (size.x as f64) + fractal_zoom.center.0;
+                let fractal_y = (cursor_position.y as f64 - (size.y as f64) / 2.0) * fractal_zoom.scale / (size.y as f64) + fractal_zoom.center.1;
+
+                // Update fractal center
+                fractal_zoom.center = (fractal_x, fractal_y);
+            }
+        }
+    }
+}
 
 
 
