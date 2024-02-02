@@ -29,7 +29,7 @@ fn setup(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     mut images: ResMut<Assets<Image>>,
 ) {
-     let size = Vec2::new(1280.0, 1280.0);
+    let size = Vec2::new(1280.0, 1280.0);
     let extent = Extent3d {
         width: size.x as u32,
         height: size.y as u32,
@@ -42,7 +42,13 @@ fn setup(
         TextureFormat::Rgba8Unorm
     );
 
+    // Add image and check that it is successfully loaded
     let image_handle = images.add(image);
+    if image_handle.is_none() {
+        eprintln!("Failed to load the image asset.");
+        return;
+    }
+
     let texture_atlas = TextureAtlas::from_grid(image_handle.clone(), size, 1, 1, None, None);
     let atlas_handle = texture_atlases.add(texture_atlas);
 
