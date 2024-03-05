@@ -232,7 +232,7 @@ fn update_fractal(
           let cx = (x as f32 * scale / width as f32) + center_x - scale / 2.0;
           let cy = (y as f32 * scale / height as f32) + center_y - scale / 2.0;
           let c = Complex::new(-0.8, 0.156);
-          let mut total_color = Vec4::ZERO;
+          let mut total_color = Color::rgba(0., 0., 0., 0.);
           // Compute the mean color from mutiple points chosen randomly in the pixel
           for _ in 0..SUBSTEPS as i32 {
             let value = julia(
@@ -242,11 +242,12 @@ fn update_fractal(
             );
             total_color += color_gradient::DEFAULT_COLOR_GRADIENT.get_color(value);
           }
-          let color = (total_color * 255. / SUBSTEPS).round();
+          let total_color_array = total_color.as_rgba_f32();
 
           // Update image data
           let offset = x * 4;
-          (0..4).for_each(|i| row[offset + i] = color[i] as u8);
+          (0..4)
+            .for_each(|i| row[offset + i] = (total_color_array[i] / SUBSTEPS * 255.).round() as u8);
         }
       });
   }

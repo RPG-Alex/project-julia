@@ -1,16 +1,16 @@
 use bevy::prelude::*;
 
-type Rgba = Vec4;
+type Rgba = Color;
 
 const DEFAULT_RGBA_COLORS: [Rgba; 8] = [
-  Vec4::new(0., 0., 0., 1.),
-  Vec4::new(0.016, 0.137, 0.231, 1.),
-  Vec4::new(0.145, 0.514, 0.8, 1.),
-  Vec4::new(0.886, 0.91, 0.557, 1.),
-  Vec4::new(0.82, 0.502, 0.165, 1.),
-  Vec4::new(0.839, 0.059, 0.059, 1.),
-  Vec4::new(0.549, 0.024, 0.024, 1.),
-  Vec4::new(0., 0., 0., 1.),
+  Color::rgba(0., 0., 0., 1.),
+  Color::rgba(0.016, 0.137, 0.231, 1.),
+  Color::rgba(0.145, 0.514, 0.8, 1.),
+  Color::rgba(0.886, 0.91, 0.557, 1.),
+  Color::rgba(0.82, 0.502, 0.165, 1.),
+  Color::rgba(0.839, 0.059, 0.059, 1.),
+  Color::rgba(0.549, 0.024, 0.024, 1.),
+  Color::rgba(0., 0., 0., 1.),
 ];
 
 const DEFAULT_TRESHOLDS: [f32; 8] = [0.03, 0.05, 0.08, 0.1, 0.13, 0.18, 0.25, 1.];
