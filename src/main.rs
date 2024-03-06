@@ -153,7 +153,7 @@ fn button_interaction_system(
   mut fractal_zoom: ResMut<FractalZoom>,
   images: ResMut<Assets<Image>>,
   fractal_texture: Res<FractalTexture>,
-  mut zoom_buttom_clicked: ResMust<ZoomButtonClicked>,
+  mut zoom_buttom_clicked: ResMut<ZoomButtonClicked>,
 )
 {
   if let Some((interaction, mut background_color, _, zoom_in, zoom_out)) =
@@ -161,6 +161,7 @@ fn button_interaction_system(
   {
     match *interaction {
       Interaction::Pressed => {
+        zoom_buttom_clicked.0 = true;
         if zoom_in.is_some() {
           fractal_zoom.scale *= 0.9; // Zoom in
         } else if zoom_out.is_some() {
