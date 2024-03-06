@@ -53,3 +53,4 @@ impl<const N: usize> ColorGradient<N>
     *self.colors.last().unwrap()
   }
 }
+
