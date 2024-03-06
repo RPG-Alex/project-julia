@@ -16,7 +16,7 @@ fn main() {
         .insert_resource(FractalZoom { 
             scale: 3.0,
             center: (-0.8, 0.156),
-        })
+        }).insert_resource(ZoomButtonClicked::default())
         .run();
 }
 
@@ -81,6 +81,9 @@ struct ZoomInButton;
 #[derive(Component)]
 struct ZoomOutButton;
 
+#[derive(Resource,Default)]
+struct ZoomButtonClicked(bool);
+
 fn setup_ui(
     mut commands: Commands,
 ) {
@@ -142,12 +145,14 @@ fn button_interaction_system(
         (&Interaction, &mut BackgroundColor, &Children, Option<&ZoomInButton>, Option<&ZoomOutButton>),
         (Changed<Interaction>, With<Button>),
     >,
+    mut zoom_button_clicked: ResMut<ZoomButtonClicked>,
     mut fractal_zoom: ResMut<FractalZoom>,
 ) {
     for (interaction, mut background_color, _, zoom_in, zoom_out) in interaction_query.iter_mut() {
 
         match *interaction {
             Interaction::Pressed => {
+                zoom_button_clicked.0 = true;
                 if zoom_in.is_some() {
                     fractal_zoom.scale *= 0.9; // Zoom in
                 } else if zoom_out.is_some() {
@@ -166,7 +171,12 @@ fn click_to_center(
     mut fractal_zoom: ResMut<FractalZoom>,
     mut windows: Query<&Window>,
     mouse_click: Res<Input<MouseButton>>,
+    mut zoom_button_clicked: ResMut<ZoomButtonClicked>, 
 ) {
+    if zoom_button_clicked.0 {
+        zoom_button_clicked.0 = false; // Reset the flag and return early
+        return;
+    }
     if let Some(window) = windows.iter().next() {
         if mouse_click.just_pressed(MouseButton::Left) {
             if let Some(cursor_position) = window.cursor_position() {
