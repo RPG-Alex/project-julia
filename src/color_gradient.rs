@@ -22,10 +22,8 @@ pub struct ColorGradient<const N: usize>
   tresholds: [f32; N],
 }
 
-pub const DEFAULT_COLOR_GRADIENT: ColorGradient<8> = ColorGradient {
-  colors:    DEFAULT_RGBA_COLORS,
-  tresholds: DEFAULT_TRESHOLDS,
-};
+pub const DEFAULT_COLOR_GRADIENT: ColorGradient<8> =
+  ColorGradient::new(DEFAULT_RGBA_COLORS, DEFAULT_TRESHOLDS);
 
 impl Default for ColorGradient<8>
 {
@@ -35,7 +33,7 @@ impl Default for ColorGradient<8>
 impl<const N: usize> ColorGradient<N>
 {
   #[inline]
-  pub fn new(colors: [Rgba; N], tresholds: [f32; N]) -> Self { Self { colors, tresholds } }
+  pub const fn new(colors: [Rgba; N], tresholds: [f32; N]) -> Self { Self { colors, tresholds } }
 
   #[inline]
   pub fn get_color(&self, x: f32) -> Rgba
