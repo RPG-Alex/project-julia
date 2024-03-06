@@ -20,7 +20,9 @@ fn main()
       scale:  3.0,
       center: (-0.8, 0.156),
     })
+    .insert_resource(ZoomButtonClicked::default())
     .run();
+
 }
 
 #[derive(Component)]
@@ -79,9 +81,16 @@ struct ZoomInButton;
 #[derive(Component)]
 struct ZoomOutButton;
 
-fn setup_ui(mut commands: Commands)
-{
-  commands
+
+#[derive(Resource,Default)]
+struct ZoomButtonClicked(bool);
+
+fn setup_ui(
+    mut commands: Commands,
+) {
+
+    commands
+
     .spawn(NodeBundle {
       style: Style {
         ..Default::default()
@@ -144,6 +153,7 @@ fn button_interaction_system(
   mut fractal_zoom: ResMut<FractalZoom>,
   images: ResMut<Assets<Image>>,
   fractal_texture: Res<FractalTexture>,
+  mut zoom_buttom_clicked: ResMust<ZoomButtonClicked>,
 )
 {
   if let Some((interaction, mut background_color, _, zoom_in, zoom_out)) =
@@ -162,11 +172,13 @@ fn button_interaction_system(
       _ => {
         *background_color = BackgroundColor(Color::rgb(0.15, 0.15, 0.15));
       },
+
     }
   }
 }
 
 fn click_to_center(
+
   mut fractal_zoom: ResMut<FractalZoom>,
   windows: Query<&Window>,
   mouse_click: Res<Input<MouseButton>>,
@@ -188,6 +200,7 @@ fn click_to_center(
         fractal_zoom.center = (fractal_x, fractal_y);
         update_fractal(images, fractal_texture, fractal_zoom);
       }
+
     }
   }
 }
