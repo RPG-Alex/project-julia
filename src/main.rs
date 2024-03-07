@@ -14,10 +14,10 @@ fn main()
     .add_plugins(DefaultPlugins)
     .add_systems(Startup, (setup, setup_ui))
     .add_systems(PostStartup, update_fractal)
-    .add_systems(Update, (/* update_fractal, */ button_interaction_system, click_to_center,zoom_with_mouse_wheel))
+    .add_systems(Update, (/* update_fractal, */ (button_interaction_system, click_to_center).chain(),zoom_with_mouse_wheel))
     .insert_resource(FractalZoom {
-      scale:  3.0,
-      center: (-0.8, 0.156),
+        scale:  3.0,
+        center: (-0.8, 0.156),
     })
     .insert_resource(ZoomButtonClicked::default())
     .run();
