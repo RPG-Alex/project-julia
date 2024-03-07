@@ -1,6 +1,5 @@
 use bevy::{
-  prelude::*,
-  render::render_resource::{Extent3d, TextureDimension, TextureFormat},
+  input::mouse::MouseWheel, prelude::*, render::render_resource::{Extent3d, TextureDimension, TextureFormat}
 };
 use nalgebra::{Complex, Normed};
 use rand::random;
@@ -15,7 +14,7 @@ fn main()
     .add_plugins(DefaultPlugins)
     .add_systems(Startup, (setup, setup_ui))
     .add_systems(PostStartup, update_fractal)
-    .add_systems(Update, (/* update_fractal, */ button_interaction_system, click_to_center))
+    .add_systems(Update, (/* update_fractal, */ button_interaction_system, click_to_center,zoom_with_mouse_wheel))
     .insert_resource(FractalZoom {
       scale:  3.0,
       center: (-0.8, 0.156),
@@ -295,4 +294,21 @@ fn julia(c: Complex<f32>, x: f32, y: f32) -> f32
     z = z * z + c;
   }
   smoother(u8::MAX, z)
+}
+fn zoom_with_mouse_wheel(
+    mut scroll_events: EventReader<MouseWheel>,
+    mut fractal_zoom: ResMut<FractalZoom>,
+    images: ResMut<Assets<Image>>,
+    fractal_texture: Res<FractalTexture>,
+) {
+    for event in scroll_events.read() {
+        match event.y {
+            // Positive y value means scrolling up (zoom in)
+            // Negative y value means scrolling down (zoom out)
+            _ if event.y > 0.0 => fractal_zoom.scale *= 0.9, // Zoom in
+            _ => fractal_zoom.scale *= 1.1,                  // Zoom out
+        }
+    }
+    update_fractal(images, fractal_texture, fractal_zoom);
+
 }
