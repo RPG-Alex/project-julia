@@ -185,8 +185,14 @@ fn click_to_center(
   mouse_click: Res<Input<MouseButton>>,
   images: ResMut<Assets<Image>>,
   fractal_texture: Res<FractalTexture>,
+  mut zoom_button_clicked: ResMut<ZoomButtonClicked>, 
+
 )
 {
+    if zoom_button_clicked.0 {
+        zoom_button_clicked.0 = false; // Reset the flag and return early
+        return;
+    }
   if let Some(window) = windows.iter().next() {
     if mouse_click.just_pressed(MouseButton::Left) {
       if let Some(cursor_position) = window.cursor_position() {
