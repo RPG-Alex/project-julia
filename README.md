@@ -1,7 +1,7 @@
 <a name="readme-top"></a>
 # Rust Fractal Explorer with Bevy
 <div align="center">
-<img src="images/new-logo.png" alt="Logo" width="80" height="80">
+<img src="images/julia-render-1.0.png" alt="Logo" width="100" height="80">
 </div>
 
 <details>
