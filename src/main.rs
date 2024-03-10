@@ -6,9 +6,6 @@ use bevy::{
     render_resource::{Extent3d, TextureDimension, TextureFormat},
   },
 };
-use nalgebra::{Complex, Normed};
-use rand::random;
-use rayon::prelude::*;
 
 mod color_gradient;
 mod sets;
@@ -22,8 +19,8 @@ fn main() {
     .add_systems(
       Update,
       (
-        /* update_fractal, */
         julia::update_settings,
+        // update_fractal,
         // button_interaction_system,
         // click_to_center,
         // zoom_with_mouse_wheel,
@@ -40,6 +37,7 @@ fn main() {
 #[derive(Component)]
 struct FractalMaterial;
 
+#[allow(dead_code)]
 fn setup(
   mut commands: Commands,
   mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
@@ -152,7 +150,7 @@ fn setup_ui(mut commands: Commands) {
     });
 }
 
-#[allow(clippy::type_complexity)]
+#[allow(clippy::type_complexity, dead_code, unused_variables)]
 fn button_interaction_system(
   mut interaction_query: Query<
     (
@@ -190,6 +188,7 @@ fn button_interaction_system(
   }
 }
 
+#[allow(dead_code, unused_variables)]
 fn click_to_center(
   mut fractal_zoom: ResMut<FractalZoom>,
   windows: Query<&Window>,
@@ -229,77 +228,7 @@ struct FractalZoom {
   center: (f32, f32),
 }
 
-// Increasing the number of substeps will reduce the aliasing at the cost of
-// performance.
-const SUBSTEPS: f32 = 1.;
-
-fn update_fractal(
-  mut images: ResMut<Assets<Image>>,
-  fractal_texture: Res<FractalTexture>,
-  fractal_zoom: ResMut<FractalZoom>,
-) {
-  if let Some(image) = images.get_mut(&fractal_texture.0) {
-    let size = image.texture_descriptor.size;
-    let width = size.width as usize;
-    let height = size.height as usize;
-
-    let scale = fractal_zoom.scale;
-    let center_x = fractal_zoom.center.0;
-    let center_y = fractal_zoom.center.1;
-
-    // Process in chunks using rayon in parallel!
-    image
-      .data
-      .par_chunks_mut(width * 4)
-      .enumerate()
-      .for_each(|(y, row)| {
-        for x in 0..width {
-          // Map pixel to fractal coordinate space
-          let cx = (x as f32 * scale / width as f32) + center_x - scale / 2.0;
-          let cy = (y as f32 * scale / height as f32) + center_y - scale / 2.0;
-          let c = Complex::new(-0.8, 0.156);
-          let mut total_color = Vec4::ZERO;
-          // Compute the mean color from mutiple points chosen randomly in the pixel
-          for _ in 0..SUBSTEPS as i32 {
-            let value = julia(
-              c,
-              cx + (random::<f32>() - 0.5) / width as f32,
-              cy + (random::<f32>() - 0.5) / height as f32,
-            );
-            total_color += color_gradient::DEFAULT_COLOR_GRADIENT
-              .get_color(value)
-              .rgba_to_vec4();
-          }
-
-          // Update image data
-          let offset = x * 4;
-          (0..4).for_each(|i| row[offset + i] = (total_color[i] / SUBSTEPS * 255.).round() as u8);
-        }
-      });
-  }
-}
-
-// Transforms the [0, 1] value to another value using a smoothstep-like function
-#[inline]
-fn smoother(iter: u8, z: Complex<f32>) -> f32 {
-  (iter as f32 - z.norm_squared().log2().max(1.).log2())
-    .max(0.)
-    .min(u8::MAX as f32)
-    / u8::MAX as f32
-}
-
-// Returns a f32 between 0 and 1 that represents the color of the pixel
-fn julia(c: Complex<f32>, x: f32, y: f32) -> f32 {
-  let mut z = Complex::new(x, y);
-
-  for i in 0..u8::MAX {
-    if z.norm_squared() > 4.0 {
-      return smoother(i, z);
-    }
-    z = z * z + c;
-  }
-  smoother(u8::MAX, z)
-}
+#[allow(dead_code, unused_variables)]
 fn zoom_with_mouse_wheel(
   mut scroll_events: EventReader<MouseWheel>,
   mut fractal_zoom: ResMut<FractalZoom>,
@@ -314,6 +243,78 @@ fn zoom_with_mouse_wheel(
       _ => fractal_zoom.scale *= 1.1,                  // Zoom out
     }
   }
-  update_fractal(images, fractal_texture, fractal_zoom);
+  // update_fractal(images, fractal_texture, fractal_zoom);
 }
 
+// I let the following code even though it is mostly irrelevant now
+// // Increasing the number of substeps will reduce the aliasing at the cost of
+// // performance.
+// const SUBSTEPS: f32 = 1.;
+//
+// fn update_fractal(
+//   mut images: ResMut<Assets<Image>>,
+//   fractal_texture: Res<FractalTexture>,
+//   fractal_zoom: ResMut<FractalZoom>,
+// ) {
+//   if let Some(image) = images.get_mut(&fractal_texture.0) {
+//     let size = image.texture_descriptor.size;
+//     let width = size.width as usize;
+//     let height = size.height as usize;
+//
+//     let scale = fractal_zoom.scale;
+//     let center_x = fractal_zoom.center.0;
+//     let center_y = fractal_zoom.center.1;
+//
+//     // Process in chunks using rayon in parallel!
+//     image
+//       .data
+//       .par_chunks_mut(width * 4)
+//       .enumerate()
+//       .for_each(|(y, row)| {
+//         for x in 0..width {
+//           // Map pixel to fractal coordinate space
+//           let cx = (x as f32 * scale / width as f32) + center_x - scale / 2.0;
+//           let cy = (y as f32 * scale / height as f32) + center_y - scale / 2.0;
+//           let c = Complex::new(-0.8, 0.156);
+//           let mut total_color = Vec4::ZERO;
+//           // Compute the mean color from mutiple points chosen randomly in the pixel
+//           for _ in 0..SUBSTEPS as i32 {
+//             let value = julia(
+//               c,
+//               cx + (random::<f32>() - 0.5) / width as f32,
+//               cy + (random::<f32>() - 0.5) / height as f32,
+//             );
+//             total_color += color_gradient::DEFAULT_COLOR_GRADIENT
+//               .get_color(value)
+//               .rgba_to_vec4();
+//           }
+//
+//           // Update image data
+//           let offset = x * 4;
+//           (0..4).for_each(|i| row[offset + i] = (total_color[i] / SUBSTEPS * 255.).round() as u8);
+//         }
+//       });
+//   }
+// }
+//
+// // Transforms the [0, 1] value to another value using a smoothstep-like function
+// #[inline]
+// fn smoother(iter: u8, z: Complex<f32>) -> f32 {
+//   (iter as f32 - z.norm_squared().log2().max(1.).log2())
+//     .max(0.)
+//     .min(u8::MAX as f32)
+//     / u8::MAX as f32
+// }
+//
+// // Returns a f32 between 0 and 1 that represents the color of the pixel
+// fn julia(c: Complex<f32>, x: f32, y: f32) -> f32 {
+//   let mut z = Complex::new(x, y);
+//
+//   for i in 0..u8::MAX {
+//     if z.norm_squared() > 4.0 {
+//       return smoother(i, z);
+//     }
+//     z = z * z + c;
+//   }
+//   smoother(u8::MAX, z)
+// }
