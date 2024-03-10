@@ -1,27 +1,40 @@
 use bevy::{
-  input::mouse::MouseWheel, prelude::*, render::render_resource::{Extent3d, TextureDimension, TextureFormat}
+  input::mouse::MouseWheel,
+  prelude::*,
+  render::{
+    render_asset::RenderAssetUsages,
+    render_resource::{Extent3d, TextureDimension, TextureFormat},
+  },
 };
 use nalgebra::{Complex, Normed};
 use rand::random;
 use rayon::prelude::*;
 
 mod color_gradient;
-#[allow(non_camel_case_types)]
+mod sets;
+use sets::julia;
 
-fn main()
-{
+fn main() {
   App::new()
-    .add_plugins(DefaultPlugins)
-    .add_systems(Startup, (setup, setup_ui))
-    .add_systems(PostStartup, update_fractal)
-    .add_systems(Update, (/* update_fractal, */ (button_interaction_system, click_to_center).chain(),zoom_with_mouse_wheel))
+    .add_plugins((DefaultPlugins, julia::PostProcessPlugin))
+    .add_systems(Startup, (julia::setup, setup_ui /* setup */))
+    // .add_systems(PostStartup, update_fractal)
+    .add_systems(
+      Update,
+      (
+        /* update_fractal, */
+        julia::update_settings,
+        // button_interaction_system,
+        // click_to_center,
+        // zoom_with_mouse_wheel,
+      ),
+    )
     .insert_resource(FractalZoom {
-        scale:  3.0,
-        center: (-0.8, 0.156),
+      scale: 3.0,
+      center: (-0.8, 0.156),
     })
     .insert_resource(ZoomButtonClicked::default())
     .run();
-
 }
 
 #[derive(Component)]
@@ -29,18 +42,22 @@ struct FractalMaterial;
 
 fn setup(
   mut commands: Commands,
-  mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+  mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
   mut images: ResMut<Assets<Image>>,
-)
-{
+) {
   let size = Vec2::new(1280.0, 1280.0);
   let extent = Extent3d {
-    width:                 size.x as u32,
-    height:                size.y as u32,
+    width: size.x as u32,
+    height: size.y as u32,
     depth_or_array_layers: 1,
   };
-  let image =
-    Image::new_fill(extent, TextureDimension::D2, &[0, 0, 0, 0], TextureFormat::Rgba8Unorm);
+  let image = Image::new_fill(
+    extent,
+    TextureDimension::D2,
+    &[0, 0, 0, 0],
+    TextureFormat::Rgba8Unorm,
+    RenderAssetUsages::default(),
+  );
 
   // Add image and check that it is successfully loaded
   let image_handle = images.add(image);
@@ -49,7 +66,7 @@ fn setup(
   //   return;
   // }
 
-  let texture_atlas = TextureAtlas::from_grid(image_handle.clone(), size, 1, 1, None, None);
+  let texture_atlas = TextureAtlasLayout::from_grid(size, 1, 1, None, None);
   let atlas_handle = texture_atlases.add(texture_atlas);
 
   // Camera
@@ -58,14 +75,17 @@ fn setup(
   // Create a sprite to render the fractal texture atlas
   commands.spawn((
     SpriteSheetBundle {
-      texture_atlas: atlas_handle,
-      ..Default::default()
+      atlas: TextureAtlas {
+        layout: atlas_handle,
+        index: 0,
+      },
+      ..default()
     },
     FractalMaterial,
   ));
   let fractal_texture = FractalTexture(image_handle);
   let fractal_zoom = FractalZoom {
-    scale:  3.0,
+    scale: 3.0,
     center: (0.0, 0.0),
   };
   commands.insert_resource(fractal_texture);
@@ -80,16 +100,11 @@ struct ZoomInButton;
 #[derive(Component)]
 struct ZoomOutButton;
 
-
-#[derive(Resource,Default)]
+#[derive(Resource, Default)]
 struct ZoomButtonClicked(bool);
 
-fn setup_ui(
-    mut commands: Commands,
-) {
-
-    commands
-
+fn setup_ui(mut commands: Commands) {
+  commands
     .spawn(NodeBundle {
       style: Style {
         ..Default::default()
@@ -153,8 +168,7 @@ fn button_interaction_system(
   images: ResMut<Assets<Image>>,
   fractal_texture: Res<FractalTexture>,
   mut zoom_buttom_clicked: ResMut<ZoomButtonClicked>,
-)
-{
+) {
   if let Some((interaction, mut background_color, _, zoom_in, zoom_out)) =
     interaction_query.iter_mut().next()
   {
@@ -167,31 +181,27 @@ fn button_interaction_system(
           fractal_zoom.scale *= 1.1; // Zoom out
         };
         *background_color = BackgroundColor(Color::rgb(0.35, 0.75, 0.35));
-        update_fractal(images, fractal_texture, fractal_zoom);
+        // update_fractal(images, fractal_texture, fractal_zoom);
       },
       _ => {
         *background_color = BackgroundColor(Color::rgb(0.15, 0.15, 0.15));
       },
-
     }
   }
 }
 
 fn click_to_center(
-
   mut fractal_zoom: ResMut<FractalZoom>,
   windows: Query<&Window>,
-  mouse_click: Res<Input<MouseButton>>,
+  mouse_click: Res<ButtonInput<MouseButton>>,
   images: ResMut<Assets<Image>>,
   fractal_texture: Res<FractalTexture>,
-  mut zoom_button_clicked: ResMut<ZoomButtonClicked>, 
-
-)
-{
-    if zoom_button_clicked.0 {
-        zoom_button_clicked.0 = false; // Reset the flag and return early
-        return;
-    }
+  mut zoom_button_clicked: ResMut<ZoomButtonClicked>,
+) {
+  if zoom_button_clicked.0 {
+    zoom_button_clicked.0 = false; // Reset the flag and return early
+    return;
+  }
   if let Some(window) = windows.iter().next() {
     if mouse_click.just_pressed(MouseButton::Left) {
       if let Some(cursor_position) = window.cursor_position() {
@@ -204,9 +214,8 @@ fn click_to_center(
 
         // Update fractal center
         fractal_zoom.center = (fractal_x, fractal_y);
-        update_fractal(images, fractal_texture, fractal_zoom);
+        // update_fractal(images, fractal_texture, fractal_zoom);
       }
-
     }
   }
 }
@@ -215,9 +224,8 @@ fn click_to_center(
 struct FractalTexture(Handle<Image>);
 
 #[derive(Resource)]
-struct FractalZoom
-{
-  scale:  f32,
+struct FractalZoom {
+  scale: f32,
   center: (f32, f32),
 }
 
@@ -229,8 +237,7 @@ fn update_fractal(
   mut images: ResMut<Assets<Image>>,
   fractal_texture: Res<FractalTexture>,
   fractal_zoom: ResMut<FractalZoom>,
-)
-{
+) {
   if let Some(image) = images.get_mut(&fractal_texture.0) {
     let size = image.texture_descriptor.size;
     let width = size.width as usize;
@@ -251,7 +258,7 @@ fn update_fractal(
           let cx = (x as f32 * scale / width as f32) + center_x - scale / 2.0;
           let cy = (y as f32 * scale / height as f32) + center_y - scale / 2.0;
           let c = Complex::new(-0.8, 0.156);
-          let mut total_color = Color::rgba(0., 0., 0., 0.);
+          let mut total_color = Vec4::ZERO;
           // Compute the mean color from mutiple points chosen randomly in the pixel
           for _ in 0..SUBSTEPS as i32 {
             let value = julia(
@@ -259,14 +266,14 @@ fn update_fractal(
               cx + (random::<f32>() - 0.5) / width as f32,
               cy + (random::<f32>() - 0.5) / height as f32,
             );
-            total_color += color_gradient::DEFAULT_COLOR_GRADIENT.get_color(value);
+            total_color += color_gradient::DEFAULT_COLOR_GRADIENT
+              .get_color(value)
+              .rgba_to_vec4();
           }
-          let total_color_array = total_color.as_rgba_f32();
 
           // Update image data
           let offset = x * 4;
-          (0..4)
-            .for_each(|i| row[offset + i] = (total_color_array[i] / SUBSTEPS * 255.).round() as u8);
+          (0..4).for_each(|i| row[offset + i] = (total_color[i] / SUBSTEPS * 255.).round() as u8);
         }
       });
   }
@@ -274,8 +281,7 @@ fn update_fractal(
 
 // Transforms the [0, 1] value to another value using a smoothstep-like function
 #[inline]
-fn smoother(iter: u8, z: Complex<f32>) -> f32
-{
+fn smoother(iter: u8, z: Complex<f32>) -> f32 {
   (iter as f32 - z.norm_squared().log2().max(1.).log2())
     .max(0.)
     .min(u8::MAX as f32)
@@ -283,8 +289,7 @@ fn smoother(iter: u8, z: Complex<f32>) -> f32
 }
 
 // Returns a f32 between 0 and 1 that represents the color of the pixel
-fn julia(c: Complex<f32>, x: f32, y: f32) -> f32
-{
+fn julia(c: Complex<f32>, x: f32, y: f32) -> f32 {
   let mut z = Complex::new(x, y);
 
   for i in 0..u8::MAX {
@@ -296,19 +301,19 @@ fn julia(c: Complex<f32>, x: f32, y: f32) -> f32
   smoother(u8::MAX, z)
 }
 fn zoom_with_mouse_wheel(
-    mut scroll_events: EventReader<MouseWheel>,
-    mut fractal_zoom: ResMut<FractalZoom>,
-    images: ResMut<Assets<Image>>,
-    fractal_texture: Res<FractalTexture>,
+  mut scroll_events: EventReader<MouseWheel>,
+  mut fractal_zoom: ResMut<FractalZoom>,
+  images: ResMut<Assets<Image>>,
+  fractal_texture: Res<FractalTexture>,
 ) {
-    for event in scroll_events.read() {
-        match event.y {
-            // Positive y value means scrolling up (zoom in)
-            // Negative y value means scrolling down (zoom out)
-            _ if event.y > 0.0 => fractal_zoom.scale *= 0.9, // Zoom in
-            _ => fractal_zoom.scale *= 1.1,                  // Zoom out
-        }
+  for event in scroll_events.read() {
+    match event.y {
+      // Positive y value means scrolling up (zoom in)
+      // Negative y value means scrolling down (zoom out)
+      _ if event.y > 0.0 => fractal_zoom.scale *= 0.9, // Zoom in
+      _ => fractal_zoom.scale *= 1.1,                  // Zoom out
     }
-    update_fractal(images, fractal_texture, fractal_zoom);
-
+  }
+  update_fractal(images, fractal_texture, fractal_zoom);
 }
+
