@@ -18,24 +18,16 @@ use bevy::{
     render_graph::{
       NodeRunError, RenderGraphApp, RenderGraphContext, RenderLabel, ViewNode, ViewNodeRunner,
     },
-    render_resource::{
-      binding_types::{sampler, texture_2d, uniform_buffer},
-      *,
-    },
+    render_resource::{binding_types::uniform_buffer, *},
     renderer::{RenderContext, RenderDevice},
     texture::BevyDefault,
     view::ViewTarget,
     RenderApp,
   },
+  window::WindowResized,
 };
 
-// fn main() {
-//   App::new()
-//     .add_plugins((DefaultPlugins, PostProcessPlugin))
-//     .add_systems(Startup, setup)
-//     .add_systems(Update, update_settings)
-//     .run();
-// }
+use crate::color_gradient;
 
 pub struct PostProcessPlugin;
 
@@ -94,11 +86,7 @@ impl ViewNode for PostProcessNode {
     let bind_group = render_context.render_device().create_bind_group(
       "post_process_bind_group",
       &post_process_pipeline.layout,
-      &BindGroupEntries::sequential((
-        post_process.source,
-        &post_process_pipeline.sampler,
-        settings_binding.clone(),
-      )),
+      &BindGroupEntries::sequential((settings_binding.clone(),)),
     );
     let mut render_pass = render_context.begin_tracked_render_pass(RenderPassDescriptor {
       label: Some("post_process_pass"),
@@ -121,7 +109,6 @@ impl ViewNode for PostProcessNode {
 #[derive(Resource)]
 struct PostProcessPipeline {
   layout: BindGroupLayout,
-  sampler: Sampler,
   pipeline_id: CachedRenderPipelineId,
 }
 impl FromWorld for PostProcessPipeline {
@@ -131,14 +118,9 @@ impl FromWorld for PostProcessPipeline {
       "post_process_bind_group_layout",
       &BindGroupLayoutEntries::sequential(
         ShaderStages::FRAGMENT,
-        (
-          texture_2d(TextureSampleType::Float { filterable: true }),
-          sampler(SamplerBindingType::Filtering),
-          uniform_buffer::<PostProcessSettings>(false),
-        ),
+        (uniform_buffer::<PostProcessSettings>(false),),
       ),
     );
-    let sampler = render_device.create_sampler(&SamplerDescriptor::default());
     // Load the shader here
     let shader = world.resource::<AssetServer>().load("shaders/julia.wgsl");
     let pipeline_id =
@@ -166,36 +148,54 @@ impl FromWorld for PostProcessPipeline {
 
     Self {
       layout,
-      sampler,
       pipeline_id,
     }
   }
 }
 
-// This is the component that will get passed to the shader
+// This is the component that will get passed to the shader.
+// The WGSL script contains a struct with the same name and fields.
 #[derive(Component, Default, Clone, Copy, ExtractComponent, ShaderType)]
 pub struct PostProcessSettings {
-  color: Color,
+  gradient: color_gradient::ColorGradient,
+  // The view is a vec4 with the x and y being the position of the camera
+  // and the z and w being the width and height of the camera on the complex plane.
+  view: Vec4,
+  // time in seconds since the start of the program.
+  time: f32,
+  // defines the speed of the animation
+  pulse: f32,
 }
 
-/// Set up a simple 3D scene
+// Setup the camera and the settings
 pub fn setup(mut commands: Commands) {
   // camera
   commands.spawn((
     Camera2dBundle::default(),
     // Add the setting to the camera.
-    // This component is also used to determine on which camera to run the post processing effect.
-    PostProcessSettings { color: Color::BLUE },
+    // This component is also used to determine on which camera
+    // to run the post processing effect.
+    PostProcessSettings {
+      gradient: color_gradient::DEFAULT_COLOR_GRADIENT,
+      view: Vec4::new(0.0, 0.0, 2.0 * 16.0 / 9.0, 2.0),
+      time: 0.0,
+      pulse: 0.4,
+    },
   ));
 }
 
 // Update the settings every frame
-pub fn update_settings(mut settings: Query<&mut PostProcessSettings>, time: Res<Time>) {
-  for mut setting in &mut settings {
-    setting.color = Color::rgb(
-      (time.elapsed_seconds() * 0.5).sin() * 0.5 + 0.5,
-      (time.elapsed_seconds() * 0.5 + 2.0).sin() * 0.5 + 0.5,
-      (time.elapsed_seconds() * 0.5 + 4.0).sin() * 0.5 + 0.5,
-    );
+pub fn update_settings(
+  mut settings: Query<&mut PostProcessSettings>,
+  time: Res<Time>,
+  mut resize_reader: EventReader<WindowResized>,
+) {
+  for mut settings in settings.iter_mut() {
+    settings.time = time.elapsed_seconds();
+    // The following triggers on window resize and updates the aspect ratio
+    for e in resize_reader.read() {
+      // Adapt to the new aspect ratio with fixed height
+      settings.view.z = settings.view.w * e.width / e.height;
+    }
   }
 }
