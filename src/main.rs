@@ -11,7 +11,8 @@ mod color_gradient;
 mod sets;
 use sets::julia;
 
-fn main() {
+fn main()
+{
   App::new()
     .add_plugins((DefaultPlugins, julia::PostProcessPlugin))
     .add_systems(Startup, (julia::setup, setup_ui /* setup */))
@@ -27,7 +28,7 @@ fn main() {
       ),
     )
     .insert_resource(FractalZoom {
-      scale: 3.0,
+      scale:  3.0,
       center: (-0.8, 0.156),
     })
     .insert_resource(ZoomButtonClicked::default())
@@ -42,11 +43,12 @@ fn setup(
   mut commands: Commands,
   mut texture_atlases: ResMut<Assets<TextureAtlasLayout>>,
   mut images: ResMut<Assets<Image>>,
-) {
+)
+{
   let size = Vec2::new(1280.0, 1280.0);
   let extent = Extent3d {
-    width: size.x as u32,
-    height: size.y as u32,
+    width:                 size.x as u32,
+    height:                size.y as u32,
     depth_or_array_layers: 1,
   };
   let image = Image::new_fill(
@@ -75,7 +77,7 @@ fn setup(
     SpriteSheetBundle {
       atlas: TextureAtlas {
         layout: atlas_handle,
-        index: 0,
+        index:  0,
       },
       ..default()
     },
@@ -83,7 +85,7 @@ fn setup(
   ));
   let fractal_texture = FractalTexture(image_handle);
   let fractal_zoom = FractalZoom {
-    scale: 3.0,
+    scale:  3.0,
     center: (0.0, 0.0),
   };
   commands.insert_resource(fractal_texture);
@@ -101,7 +103,8 @@ struct ZoomOutButton;
 #[derive(Resource, Default)]
 struct ZoomButtonClicked(bool);
 
-fn setup_ui(mut commands: Commands) {
+fn setup_ui(mut commands: Commands)
+{
   commands
     .spawn(NodeBundle {
       style: Style {
@@ -166,7 +169,8 @@ fn button_interaction_system(
   images: ResMut<Assets<Image>>,
   fractal_texture: Res<FractalTexture>,
   mut zoom_buttom_clicked: ResMut<ZoomButtonClicked>,
-) {
+)
+{
   if let Some((interaction, mut background_color, _, zoom_in, zoom_out)) =
     interaction_query.iter_mut().next()
   {
@@ -196,7 +200,8 @@ fn click_to_center(
   images: ResMut<Assets<Image>>,
   fractal_texture: Res<FractalTexture>,
   mut zoom_button_clicked: ResMut<ZoomButtonClicked>,
-) {
+)
+{
   if zoom_button_clicked.0 {
     zoom_button_clicked.0 = false; // Reset the flag and return early
     return;
@@ -223,8 +228,9 @@ fn click_to_center(
 struct FractalTexture(Handle<Image>);
 
 #[derive(Resource)]
-struct FractalZoom {
-  scale: f32,
+struct FractalZoom
+{
+  scale:  f32,
   center: (f32, f32),
 }
 
@@ -234,7 +240,8 @@ fn zoom_with_mouse_wheel(
   mut fractal_zoom: ResMut<FractalZoom>,
   images: ResMut<Assets<Image>>,
   fractal_texture: Res<FractalTexture>,
-) {
+)
+{
   for event in scroll_events.read() {
     match event.y {
       // Positive y value means scrolling up (zoom in)
@@ -273,12 +280,12 @@ fn zoom_with_mouse_wheel(
 //       .for_each(|(y, row)| {
 //         for x in 0..width {
 //           // Map pixel to fractal coordinate space
-//           let cx = (x as f32 * scale / width as f32) + center_x - scale / 2.0;
-//           let cy = (y as f32 * scale / height as f32) + center_y - scale / 2.0;
-//           let c = Complex::new(-0.8, 0.156);
+//           let cx = (x as f32 * scale / width as f32) + center_x - scale /
+// 2.0;           let cy = (y as f32 * scale / height as f32) + center_y - scale
+// / 2.0;           let c = Complex::new(-0.8, 0.156);
 //           let mut total_color = Vec4::ZERO;
-//           // Compute the mean color from mutiple points chosen randomly in the pixel
-//           for _ in 0..SUBSTEPS as i32 {
+//           // Compute the mean color from mutiple points chosen randomly in
+// the pixel           for _ in 0..SUBSTEPS as i32 {
 //             let value = julia(
 //               c,
 //               cx + (random::<f32>() - 0.5) / width as f32,
@@ -291,14 +298,14 @@ fn zoom_with_mouse_wheel(
 //
 //           // Update image data
 //           let offset = x * 4;
-//           (0..4).for_each(|i| row[offset + i] = (total_color[i] / SUBSTEPS * 255.).round() as u8);
-//         }
+//           (0..4).for_each(|i| row[offset + i] = (total_color[i] / SUBSTEPS *
+// 255.).round() as u8);         }
 //       });
 //   }
 // }
 //
-// // Transforms the [0, 1] value to another value using a smoothstep-like function
-// #[inline]
+// // Transforms the [0, 1] value to another value using a smoothstep-like
+// function #[inline]
 // fn smoother(iter: u8, z: Complex<f32>) -> f32 {
 //   (iter as f32 - z.norm_squared().log2().max(1.).log2())
 //     .max(0.)
