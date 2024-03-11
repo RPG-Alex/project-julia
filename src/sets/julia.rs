@@ -1,5 +1,5 @@
 //! This code is mostly copied from the bevy example `post_processing.rs` and
-//! modified to use a custom shader. This example is available at https://github.com/bevyengine/bevy/blob/main/examples/shader/post_processing.rs
+//! modified to use a custom shader. This example is available at <https://github.com/bevyengine/bevy/blob/main/examples/shader/post_processing.rs>
 //! Most of the unecessary boilerplate code as well as comments have been
 //! removed for brevity. Some comments were added for parts that were modified
 //! or for some parts that seem to be important, such as the shader loading and
