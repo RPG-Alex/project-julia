@@ -21,6 +21,10 @@
         </ol>
 </details>
 
+<div align="center">
+<img src="images/julia.gif" alt="Example of Julia Render" align="center">
+</div>
+
 ## About this Project
 
 This project's purpose is to create a visually captivating and interactive fractal explorer using Rust and the Bevy engine. It focuses on rendering Julia fractals, offering real-time interactions and visualizations.

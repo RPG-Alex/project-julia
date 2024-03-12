@@ -121,7 +121,7 @@ fn interpolate_color(val: f32) -> vec4<f32>
 // Smooths the color transition
 fn smoother(iter: u32, z: vec2<f32>) -> f32
 {
-  return max(0., min(f32(MAX_ITER), f32(iter) - log2(max(1., log2(mod2(z)))))) / f32(MAX_ITER);
+  return clamp((f32(iter) - log2(max(1., log2(mod2(z))))) / f32(MAX_ITER), 0., 1.);
 }
 
 // Computes z² + c
