@@ -4,6 +4,7 @@
 //! Some comments were added for parts that were modified or for some parts that seem to be important,
 //! such as the shader loading and the `PostProcessSettings` component.
 
+
 use bevy::{
   core_pipeline::{
     core_2d::graph::{Core2d, Node2d},
@@ -31,8 +32,10 @@ use crate::color_gradient;
 
 pub struct PostProcessPlugin;
 
-impl Plugin for PostProcessPlugin {
-  fn build(&self, app: &mut App) {
+impl Plugin for PostProcessPlugin
+{
+  fn build(&self, app: &mut App)
+  {
     app.add_plugins((
       ExtractComponentPlugin::<PostProcessSettings>::default(),
       UniformComponentPlugin::<PostProcessSettings>::default(),
@@ -48,7 +51,8 @@ impl Plugin for PostProcessPlugin {
       );
   }
 
-  fn finish(&self, app: &mut App) {
+  fn finish(&self, app: &mut App)
+  {
     let Ok(render_app) = app.get_sub_app_mut(RenderApp) else {
       return;
     };
@@ -62,7 +66,8 @@ struct PostProcessLabel;
 #[derive(Default)]
 struct PostProcessNode;
 
-impl ViewNode for PostProcessNode {
+impl ViewNode for PostProcessNode
+{
   type ViewQuery = (&'static ViewTarget, &'static PostProcessSettings);
 
   fn run(
@@ -71,7 +76,8 @@ impl ViewNode for PostProcessNode {
     render_context: &mut RenderContext,
     (view_target, _post_process_settings): QueryItem<Self::ViewQuery>,
     world: &World,
-  ) -> Result<(), NodeRunError> {
+  ) -> Result<(), NodeRunError>
+  {
     let post_process_pipeline = world.resource::<PostProcessPipeline>();
     let pipeline_cache = world.resource::<PipelineCache>();
     let Some(pipeline) = pipeline_cache.get_render_pipeline(post_process_pipeline.pipeline_id)
@@ -86,18 +92,20 @@ impl ViewNode for PostProcessNode {
     let bind_group = render_context.render_device().create_bind_group(
       "post_process_bind_group",
       &post_process_pipeline.layout,
+      // To send more data to the shader, add more entries here and in the
+      // PostProcessPipeline::from_world function.
       &BindGroupEntries::sequential((settings_binding.clone(),)),
     );
     let mut render_pass = render_context.begin_tracked_render_pass(RenderPassDescriptor {
-      label: Some("post_process_pass"),
-      color_attachments: &[Some(RenderPassColorAttachment {
-        view: post_process.destination,
+      label:                    Some("post_process_pass"),
+      color_attachments:        &[Some(RenderPassColorAttachment {
+        view:           post_process.destination,
         resolve_target: None,
-        ops: Operations::default(),
+        ops:            Operations::default(),
       })],
       depth_stencil_attachment: None,
-      timestamp_writes: None,
-      occlusion_query_set: None,
+      timestamp_writes:         None,
+      occlusion_query_set:      None,
     });
     render_pass.set_render_pipeline(pipeline);
     render_pass.set_bind_group(0, &bind_group, &[]);
@@ -107,17 +115,23 @@ impl ViewNode for PostProcessNode {
 }
 
 #[derive(Resource)]
-struct PostProcessPipeline {
-  layout: BindGroupLayout,
+struct PostProcessPipeline
+{
+  layout:      BindGroupLayout,
   pipeline_id: CachedRenderPipelineId,
 }
-impl FromWorld for PostProcessPipeline {
-  fn from_world(world: &mut World) -> Self {
+
+impl FromWorld for PostProcessPipeline
+{
+  fn from_world(world: &mut World) -> Self
+  {
     let render_device = world.resource::<RenderDevice>();
     let layout = render_device.create_bind_group_layout(
       "post_process_bind_group_layout",
       &BindGroupLayoutEntries::sequential(
         ShaderStages::FRAGMENT,
+        // To send more data to the shader, add more entries here
+        // and in the PostProcessNode::run function.
         (uniform_buffer::<PostProcessSettings>(false),),
       ),
     );
@@ -127,22 +141,22 @@ impl FromWorld for PostProcessPipeline {
       world
         .resource_mut::<PipelineCache>()
         .queue_render_pipeline(RenderPipelineDescriptor {
-          label: Some("post_process_pipeline".into()),
-          layout: vec![layout.clone()],
-          vertex: fullscreen_shader_vertex_state(),
-          fragment: Some(FragmentState {
+          label:                Some("post_process_pipeline".into()),
+          layout:               vec![layout.clone()],
+          vertex:               fullscreen_shader_vertex_state(),
+          fragment:             Some(FragmentState {
             shader,
             shader_defs: vec![],
             entry_point: "fragment".into(),
             targets: vec![Some(ColorTargetState {
-              format: TextureFormat::bevy_default(),
-              blend: None,
+              format:     TextureFormat::bevy_default(),
+              blend:      None,
               write_mask: ColorWrites::ALL,
             })],
           }),
-          primitive: PrimitiveState::default(),
-          depth_stencil: None,
-          multisample: MultisampleState::default(),
+          primitive:            PrimitiveState::default(),
+          depth_stencil:        None,
+          multisample:          MultisampleState::default(),
           push_constant_ranges: vec![],
         });
 
@@ -153,22 +167,26 @@ impl FromWorld for PostProcessPipeline {
   }
 }
 
-// This is the component that will get passed to the shader.
-// The WGSL script contains a struct with the same name and fields.
+/// This is the component that will get passed to the shader.
+/// The WGSL script contains a struct with the same name and fields.
 #[derive(Component, Default, Clone, Copy, ExtractComponent, ShaderType)]
-pub struct PostProcessSettings {
+pub struct PostProcessSettings
+{
+  /// The color gradient to use for coloring the julia set.
   gradient: color_gradient::ColorGradient,
-  // The view is a vec4 with the x and y being the position of the camera
-  // and the z and w being the width and height of the camera on the complex plane.
-  view: Vec4,
-  // time in seconds since the start of the program.
-  time: f32,
-  // defines the speed of the animation
-  pulse: f32,
+  /// The view is a vec4 with the x and y being the position of the camera
+  /// and the z and w being the width and height of the camera on the complex
+  /// plane.
+  view:     Vec4,
+  /// time in seconds since the start of the program.
+  time:     f32,
+  /// defines the speed of the animation
+  pulse:    f32,
 }
 
-// Setup the camera and the settings
-pub fn setup(mut commands: Commands) {
+/// Setup the camera and the settings
+pub fn setup(mut commands: Commands)
+{
   // camera
   commands.spawn((
     Camera2dBundle::default(),
@@ -177,19 +195,22 @@ pub fn setup(mut commands: Commands) {
     // to run the post processing effect.
     PostProcessSettings {
       gradient: color_gradient::DEFAULT_COLOR_GRADIENT,
-      view: Vec4::new(0.0, 0.0, 2.0 * 16.0 / 9.0, 2.0),
-      time: 0.0,
-      pulse: 0.4,
+      view:     Vec4::new(0.0, 0.0, 2.0 * 16.0 / 9.0, 2.0),
+      time:     0.0,
+      pulse:    0.4,
     },
   ));
 }
 
-// Update the settings every frame
+/// Updates the settings every frame. This function can be used as a template
+/// for interactive communication with the shader and therefore implementing the
+/// UI.
 pub fn update_settings(
   mut settings: Query<&mut PostProcessSettings>,
   time: Res<Time>,
   mut resize_reader: EventReader<WindowResized>,
-) {
+)
+{
   for mut settings in settings.iter_mut() {
     settings.time = time.elapsed_seconds();
     // The following triggers on window resize and updates the aspect ratio
