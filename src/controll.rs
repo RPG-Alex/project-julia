@@ -1,6 +1,13 @@
 use bevy::{
-    ecs::{change_detection::DetectChangesMut, event::EventReader, system::{Query, ResMut, Resource}},
-    input::{mouse::{MouseButton, MouseButtonInput, MouseMotion, MouseWheel}, ButtonInput}, window::{CursorIcon, Window},
+    ecs::{
+        event::EventReader,
+        system::{Query, ResMut},
+    },
+    input::{
+        mouse::{MouseButton, MouseMotion, MouseWheel},
+        ButtonInput,
+    },
+    window::{CursorIcon, Window},
 };
 
 use crate::sets::julia::PostProcessSettings;
@@ -8,7 +15,7 @@ use crate::sets::julia::PostProcessSettings;
 #[allow(dead_code, unused_variables)]
 pub fn zoom_with_mouse_wheel(
     mut scroll_events: EventReader<MouseWheel>,
-    mut settings: Query<&mut PostProcessSettings>, 
+    mut settings: Query<&mut PostProcessSettings>,
 ) {
     for mut settings in settings.iter_mut() {
         for event in scroll_events.read() {
@@ -28,12 +35,10 @@ pub fn zoom_with_mouse_wheel(
     }
 }
 
-
-
 pub fn click_and_drag_with_mouse(
-   mut mouse_event: EventReader<MouseMotion>,
+    mut mouse_event: EventReader<MouseMotion>,
     mut settings: Query<&mut PostProcessSettings>,
-    mut windows:Query<&mut Window>,
+    mut windows: Query<&mut Window>,
     mouse_click: ResMut<ButtonInput<MouseButton>>,
 ) {
     if let Some(mut window) = windows.iter_mut().next() {
@@ -41,14 +46,12 @@ pub fn click_and_drag_with_mouse(
             window.cursor.icon = CursorIcon::Move;
             for event in mouse_event.read() {
                 for mut setting in settings.iter_mut() {
-                    setting.view.x += -event.delta.x*0.003;
-                    setting.view.y += event.delta.y*0.003;
+                    setting.view.x += -event.delta.x * 0.003;
+                    setting.view.y += event.delta.y * 0.003;
                 }
             }
-        }else {
+        } else {
             window.cursor.icon = CursorIcon::Default;
         }
-        
     }
-    
 }
