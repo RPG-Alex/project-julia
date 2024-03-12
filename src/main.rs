@@ -9,6 +9,8 @@ use bevy::{
 
 mod color_gradient;
 mod sets;
+mod controll;
+use controll::zoom_with_mouse_wheel;
 use sets::julia;
 
 fn main() {
@@ -20,10 +22,7 @@ fn main() {
       Update,
       (
         julia::update_settings,
-        // update_fractal,
-        // button_interaction_system,
-        // click_to_center,
-        // zoom_with_mouse_wheel,
+       zoom_with_mouse_wheel
       ),
     )
     .insert_resource(FractalZoom {
@@ -228,23 +227,23 @@ struct FractalZoom {
   center: (f32, f32),
 }
 
-#[allow(dead_code, unused_variables)]
-fn zoom_with_mouse_wheel(
-  mut scroll_events: EventReader<MouseWheel>,
-  mut fractal_zoom: ResMut<FractalZoom>,
-  images: ResMut<Assets<Image>>,
-  fractal_texture: Res<FractalTexture>,
-) {
-  for event in scroll_events.read() {
-    match event.y {
-      // Positive y value means scrolling up (zoom in)
-      // Negative y value means scrolling down (zoom out)
-      _ if event.y > 0.0 => fractal_zoom.scale *= 0.9, // Zoom in
-      _ => fractal_zoom.scale *= 1.1,                  // Zoom out
-    }
-  }
+// #[allow(dead_code, unused_variables)]
+// fn zoom_with_mouse_wheel(
+//   mut scroll_events: EventReader<MouseWheel>,
+//   mut fractal_zoom: ResMut<FractalZoom>,
+//   images: ResMut<Assets<Image>>,
+//   fractal_texture: Res<FractalTexture>,
+// ) {
+//   for event in scroll_events.read() {
+//     match event.y {
+//       // Positive y value means scrolling up (zoom in)
+//       // Negative y value means scrolling down (zoom out)
+//       _ if event.y > 0.0 => fractal_zoom.scale *= 0.9, // Zoom in
+//       _ => fractal_zoom.scale *= 1.1,                  // Zoom out
+//     }
+//   }
   // update_fractal(images, fractal_texture, fractal_zoom);
-}
+// }
 
 // I let the following code even though it is mostly irrelevant now
 // // Increasing the number of substeps will reduce the aliasing at the cost of
