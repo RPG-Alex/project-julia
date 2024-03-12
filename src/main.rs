@@ -16,7 +16,7 @@ fn main()
 {
   App::new()
     .add_plugins((DefaultPlugins, julia::PostProcessPlugin))
-    .add_systems(Startup, (julia::setup, setup_ui /* setup */))
+    .add_systems(Startup, (julia::setup, /*setup_ui*/ /* setup */))
     // .add_systems(PostStartup, update_fractal)
     .add_systems(
       Update,
@@ -26,11 +26,11 @@ fn main()
        click_and_drag_with_mouse
       ),
     )
-    .insert_resource(FractalZoom {
-      scale:  3.0,
-      center: (-0.8, 0.156),
-    })
-    .insert_resource(ZoomButtonClicked::default())
+    // .insert_resource(FractalZoom {
+    //   scale:  3.0,
+    //   center: (-0.8, 0.156),
+    // })
+    // .insert_resource(ZoomButtonClicked::default())
     .run();
 }
 
@@ -102,6 +102,7 @@ struct ZoomOutButton;
 #[derive(Resource, Default)]
 struct ZoomButtonClicked(bool);
 
+#[allow(dead_code)]
 fn setup_ui(mut commands: Commands)
 {
   commands
