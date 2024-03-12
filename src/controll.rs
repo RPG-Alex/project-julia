@@ -1,6 +1,6 @@
 use bevy::{
-    ecs::{event::EventReader, system::Query},
-    input::mouse::MouseWheel,
+    ecs::{change_detection::DetectChangesMut, event::EventReader, system::{Query, ResMut, Resource}},
+    input::{mouse::{MouseButton, MouseButtonInput, MouseMotion, MouseWheel}, ButtonInput}, window::{CursorIcon, Window},
 };
 
 use crate::sets::julia::PostProcessSettings;
@@ -26,4 +26,29 @@ pub fn zoom_with_mouse_wheel(
             }
         }
     }
+}
+
+
+
+pub fn click_and_drag_with_mouse(
+   mut mouse_event: EventReader<MouseMotion>,
+    mut settings: Query<&mut PostProcessSettings>,
+    mut windows:Query<&mut Window>,
+    mouse_click: ResMut<ButtonInput<MouseButton>>,
+) {
+    if let Some(mut window) = windows.iter_mut().next() {
+        if mouse_click.pressed(MouseButton::Left) {
+            window.cursor.icon = CursorIcon::Move;
+            for event in mouse_event.read() {
+                for mut setting in settings.iter_mut() {
+                    setting.view.x += -event.delta.x*0.003;
+                    setting.view.y += event.delta.y*0.003;
+                }
+            }
+        }else {
+            window.cursor.icon = CursorIcon::Default;
+        }
+        
+    }
+    
 }

@@ -9,7 +9,7 @@ use bevy::{
 mod color_gradient;
 mod sets;
 mod controll;
-use controll::zoom_with_mouse_wheel;
+use controll::{click_and_drag_with_mouse, zoom_with_mouse_wheel};
 use sets::julia;
 
 fn main() {
@@ -21,7 +21,8 @@ fn main() {
       Update,
       (
         julia::update_settings,
-       zoom_with_mouse_wheel
+       zoom_with_mouse_wheel,
+       click_and_drag_with_mouse
       ),
     )
     .insert_resource(FractalZoom {
