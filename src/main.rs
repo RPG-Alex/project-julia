@@ -1,5 +1,4 @@
 use bevy::{
-  input::mouse::MouseWheel,
   prelude::*,
   render::{
     render_asset::RenderAssetUsages,
