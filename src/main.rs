@@ -7,8 +7,8 @@ use bevy::{
 };
 
 mod color_gradient;
-mod sets;
 mod controll;
+mod sets;
 use controll::{click_and_drag_with_mouse, zoom_with_mouse_wheel};
 use sets::julia;
 
@@ -16,15 +16,11 @@ fn main()
 {
   App::new()
     .add_plugins((DefaultPlugins, julia::PostProcessPlugin))
-    .add_systems(Startup, (julia::setup, /*setup_ui*/ /* setup */))
+    .add_systems(Startup, (julia::setup /* setup_ui*/ /* setup */,))
     // .add_systems(PostStartup, update_fractal)
     .add_systems(
       Update,
-      (
-        julia::update_settings,
-       zoom_with_mouse_wheel,
-       click_and_drag_with_mouse
-      ),
+      (julia::update_settings, zoom_with_mouse_wheel, click_and_drag_with_mouse),
     )
     // .insert_resource(FractalZoom {
     //   scale:  3.0,
@@ -249,7 +245,7 @@ struct FractalZoom
 //       _ => fractal_zoom.scale *= 1.1,                  // Zoom out
 //     }
 //   }
-  // update_fractal(images, fractal_texture, fractal_zoom);
+// update_fractal(images, fractal_texture, fractal_zoom);
 // }
 
 // I let the following code even though it is mostly irrelevant now
