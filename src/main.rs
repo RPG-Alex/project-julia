@@ -221,6 +221,7 @@ fn click_to_center(
 }
 
 #[derive(Resource)]
+#[allow(dead_code)]
 struct FractalTexture(Handle<Image>);
 
 #[derive(Resource)]
