@@ -1,5 +1,4 @@
 use bevy::{
-  input::mouse::MouseWheel,
   prelude::*,
   render::{
     render_asset::RenderAssetUsages,
@@ -8,30 +7,26 @@ use bevy::{
 };
 
 mod color_gradient;
+mod controll;
 mod sets;
+use controll::{click_and_drag_with_mouse, zoom_with_mouse_wheel};
 use sets::julia;
 
 fn main()
 {
   App::new()
     .add_plugins((DefaultPlugins, julia::PostProcessPlugin))
-    .add_systems(Startup, (julia::setup, setup_ui /* setup */))
+    .add_systems(Startup, (julia::setup /* setup_ui*/ /* setup */,))
     // .add_systems(PostStartup, update_fractal)
     .add_systems(
       Update,
-      (
-        julia::update_settings,
-        // update_fractal,
-        // button_interaction_system,
-        // click_to_center,
-        // zoom_with_mouse_wheel,
-      ),
+      (julia::update_settings, zoom_with_mouse_wheel, click_and_drag_with_mouse),
     )
-    .insert_resource(FractalZoom {
-      scale:  3.0,
-      center: (-0.8, 0.156),
-    })
-    .insert_resource(ZoomButtonClicked::default())
+    // .insert_resource(FractalZoom {
+    //   scale:  3.0,
+    //   center: (-0.8, 0.156),
+    // })
+    // .insert_resource(ZoomButtonClicked::default())
     .run();
 }
 
@@ -103,6 +98,7 @@ struct ZoomOutButton;
 #[derive(Resource, Default)]
 struct ZoomButtonClicked(bool);
 
+#[allow(dead_code)]
 fn setup_ui(mut commands: Commands)
 {
   commands
@@ -225,6 +221,7 @@ fn click_to_center(
 }
 
 #[derive(Resource)]
+#[allow(dead_code)]
 struct FractalTexture(Handle<Image>);
 
 #[derive(Resource)]
@@ -234,24 +231,23 @@ struct FractalZoom
   center: (f32, f32),
 }
 
-#[allow(dead_code, unused_variables)]
-fn zoom_with_mouse_wheel(
-  mut scroll_events: EventReader<MouseWheel>,
-  mut fractal_zoom: ResMut<FractalZoom>,
-  images: ResMut<Assets<Image>>,
-  fractal_texture: Res<FractalTexture>,
-)
-{
-  for event in scroll_events.read() {
-    match event.y {
-      // Positive y value means scrolling up (zoom in)
-      // Negative y value means scrolling down (zoom out)
-      _ if event.y > 0.0 => fractal_zoom.scale *= 0.9, // Zoom in
-      _ => fractal_zoom.scale *= 1.1,                  // Zoom out
-    }
-  }
-  // update_fractal(images, fractal_texture, fractal_zoom);
-}
+// #[allow(dead_code, unused_variables)]
+// fn zoom_with_mouse_wheel(
+//   mut scroll_events: EventReader<MouseWheel>,
+//   mut fractal_zoom: ResMut<FractalZoom>,
+//   images: ResMut<Assets<Image>>,
+//   fractal_texture: Res<FractalTexture>,
+// ) {
+//   for event in scroll_events.read() {
+//     match event.y {
+//       // Positive y value means scrolling up (zoom in)
+//       // Negative y value means scrolling down (zoom out)
+//       _ if event.y > 0.0 => fractal_zoom.scale *= 0.9, // Zoom in
+//       _ => fractal_zoom.scale *= 1.1,                  // Zoom out
+//     }
+//   }
+// update_fractal(images, fractal_texture, fractal_zoom);
+// }
 
 // I let the following code even though it is mostly irrelevant now
 // // Increasing the number of substeps will reduce the aliasing at the cost of
