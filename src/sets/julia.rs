@@ -197,7 +197,7 @@ pub fn setup(mut commands: Commands)
     // to run the post processing effect.
     PostProcessSettings {
       gradient: color_gradient::DEFAULT_COLOR_GRADIENT,
-      view:     Vec4::new(0.0, 0.0, 2.0 * 16.0 / 9.0, 2.0),
+      view:     Vec4::new(0.0, 0.0, 2.0, 2.0),
       time:     0.0,
       pulse:    0.1,
       max_iter: 100,
