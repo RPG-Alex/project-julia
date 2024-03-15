@@ -1,12 +1,12 @@
 [package]
 name = "project-julia"
-version = "0.2.01"
+version = "0.2.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = {version="0.13.0", features=["wayland"]}
+bevy = { version = "0.13.0", features = ["wayland"] }
 nalgebra = "0.32.3"
 rand = "0.8.5"
 rayon = "1.8.0"
