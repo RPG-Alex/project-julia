@@ -48,8 +48,8 @@ pub fn click_and_drag_with_mouse(
       window.cursor.icon = CursorIcon::Move;
       for event in mouse_event.read() {
         for mut setting in settings.iter_mut() {
-          setting.view.x += -event.delta.x * 0.003;
-          setting.view.y += event.delta.y * 0.003;
+          setting.view.x += -event.delta.x * 0.003 * setting.view.z;
+          setting.view.y += event.delta.y * 0.003 * setting.view.z;
         }
       }
     } else {
