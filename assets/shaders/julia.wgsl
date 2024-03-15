@@ -25,7 +25,6 @@
 /* Constants */
 
 const MAX_COLORS_GRADIENT: u32 = 12; // matches color_gradient::MAX_COLORS_GRADIENT
-const MAX_ITER: u32 = 200;           // max iteration for the julia set computation
 
 // Matches color_gradient::ColorGradient
 struct ColorGradient 
@@ -42,6 +41,7 @@ struct PostProcessSettings
   view: vec4<f32>,
   time: f32,
   pulse: f32,
+  max_iter: u32,
 }
 
 // Retrieves the settings from Rust
@@ -121,7 +121,7 @@ fn interpolate_color(val: f32) -> vec4<f32>
 // Smooths the color transition
 fn smoother(iter: u32, z: vec2<f32>) -> f32
 {
-  return clamp((f32(iter) - log2(max(1., log2(mod2(z))))) / f32(MAX_ITER), 0., 1.);
+  return clamp((f32(iter) - log2(max(1., log2(mod2(z))))) / f32(settings.max_iter), 0., 1.);
 }
 
 // Computes z² + c
@@ -162,7 +162,7 @@ fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4<f32>
 
   // compute the julia set
   var iter = 0u;
-  while (iter < MAX_ITER && mod2(z) < 4.0)
+  while (iter < settings.max_iter && mod2(z) < 4.0)
   {
     z = julia_next(z, c);
     iter++;

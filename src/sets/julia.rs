@@ -173,14 +173,17 @@ impl FromWorld for PostProcessPipeline
 pub struct PostProcessSettings
 {
   /// The color gradient to use for coloring the julia set.
-  gradient: color_gradient::ColorGradient,
+  pub gradient: color_gradient::ColorGradient,
   // The view is a vec4 with the x and y being the position of the camera
   // and the z and w being the width and height of the camera on the complex plane.
-  pub view: Vec4,
+  pub view:     Vec4,
   // time in seconds since the start of the program.
-  time:     f32,
+  pub time:     f32,
   // defines the speed of the animation
-  pulse:    f32,
+  pub pulse:    f32,
+  // The maximum number of iterations to calculate the julia set.
+  // Should change with the zoom level.
+  pub max_iter: u32,
 }
 
 /// Setup the camera and the settings
@@ -196,7 +199,8 @@ pub fn setup(mut commands: Commands)
       gradient: color_gradient::DEFAULT_COLOR_GRADIENT,
       view:     Vec4::new(0.0, 0.0, 2.0 * 16.0 / 9.0, 2.0),
       time:     0.0,
-      pulse:    0.4,
+      pulse:    0.1,
+      max_iter: 100,
     },
   ));
 }

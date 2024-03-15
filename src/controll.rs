@@ -12,7 +12,6 @@ use bevy::{
 
 use crate::sets::julia::PostProcessSettings;
 
-#[allow(dead_code, unused_variables)]
 pub fn zoom_with_mouse_wheel(
   mut scroll_events: EventReader<MouseWheel>,
   mut settings: Query<&mut PostProcessSettings>,
@@ -26,10 +25,13 @@ pub fn zoom_with_mouse_wheel(
         _ if event.y > 0.0 => {
           settings.view.w *= 0.9;
           settings.view.z *= 0.9;
+          settings.max_iter += 3;
         }, // Zoom in
         _ => {
           settings.view.w *= 1.1;
-          settings.view.z *= 1.1
+          settings.view.z *= 1.1;
+          settings.max_iter -= 3;
+          settings.max_iter = settings.max_iter.max(100);
         }, // Zoom out
       }
     }
