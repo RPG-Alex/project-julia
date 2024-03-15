@@ -173,17 +173,21 @@ impl FromWorld for PostProcessPipeline
 pub struct PostProcessSettings
 {
   /// The color gradient to use for coloring the julia set.
-  pub gradient: color_gradient::ColorGradient,
+  pub gradient:      color_gradient::ColorGradient,
   // The view is a vec4 with the x and y being the position of the camera
   // and the z and w being the width and height of the camera on the complex plane.
-  pub view:     Vec4,
+  pub view:          Vec4,
+  // The screen is a vec2 with the x and y being the width and height of the screen.
+  pub screen:        Vec2,
   // time in seconds since the start of the program.
-  pub time:     f32,
+  pub time:          f32,
   // defines the speed of the animation
-  pub pulse:    f32,
+  pub pulse:         f32,
   // The maximum number of iterations to calculate the julia set.
   // Should change with the zoom level.
-  pub max_iter: u32,
+  pub max_iter:      u32,
+  // Square root of the number of substeps to reduce the aliasing.
+  pub substeps_sqrt: u32,
 }
 
 /// Setup the camera and the settings
@@ -196,11 +200,13 @@ pub fn setup(mut commands: Commands)
     // This component is also used to determine on which camera
     // to run the post processing effect.
     PostProcessSettings {
-      gradient: color_gradient::DEFAULT_COLOR_GRADIENT,
-      view:     Vec4::new(0.0, 0.0, 2.0, 2.0),
-      time:     0.0,
-      pulse:    0.1,
-      max_iter: 100,
+      gradient:      color_gradient::DEFAULT_COLOR_GRADIENT,
+      view:          Vec4::new(0.0, 0.0, 2.0, 2.0),
+      screen:        Vec2::new(800.0, 800.0),
+      time:          0.0,
+      pulse:         0.1,
+      max_iter:      150,
+      substeps_sqrt: 4,
     },
   ));
 }
@@ -208,7 +214,7 @@ pub fn setup(mut commands: Commands)
 /// Updates the settings every frame. This function can be used as a template
 /// for interactive communication with the shader and therefore implementing the
 /// UI.
-pub fn update_settings(
+pub fn resize_window(
   mut settings: Query<&mut PostProcessSettings>,
   time: Res<Time>,
   mut resize_reader: EventReader<WindowResized>,
@@ -218,6 +224,7 @@ pub fn update_settings(
     settings.time = time.elapsed_seconds();
     // The following triggers on window resize and updates the aspect ratio
     for e in resize_reader.read() {
+      settings.screen = Vec2::new(e.width, e.height);
       // Adapt to the new aspect ratio with fixed height
       settings.view.z = settings.view.w * e.width / e.height;
     }
