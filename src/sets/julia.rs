@@ -174,7 +174,7 @@ pub struct PostProcessSettings
 {
   /// The color gradient to use for coloring the julia set.
   pub gradient:      color_gradient::ColorGradient,
-  // The view is a vec4 with the x and y being the position of the camera
+  // The view is a vec4 with the x and y being the position of the camera on the complex plane
   // and the z and w being the width and height of the camera on the complex plane.
   pub view:          Vec4,
   // The screen is a vec2 with the x and y being the width and height of the screen.
