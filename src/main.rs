@@ -10,10 +10,10 @@ fn main()
 {
   App::new()
     .add_plugins((DefaultPlugins, julia::PostProcessPlugin))
+    .insert_resource(controll::MouseState {
+      position: Vec2::ZERO,
+    })
     .add_systems(Startup, julia::setup)
-    .add_systems(
-      Update,
-      (julia::update_settings, zoom_with_mouse_wheel, click_and_drag_with_mouse),
-    )
+    .add_systems(Update, (julia::resize_window, zoom_with_mouse_wheel, click_and_drag_with_mouse))
     .run();
 }

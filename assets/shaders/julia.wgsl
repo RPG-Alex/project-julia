@@ -25,7 +25,6 @@
 /* Constants */
 
 const MAX_COLORS_GRADIENT: u32 = 12; // matches color_gradient::MAX_COLORS_GRADIENT
-const MAX_ITER: u32 = 200;           // max iteration for the julia set computation
 
 // Matches color_gradient::ColorGradient
 struct ColorGradient 
@@ -40,8 +39,11 @@ struct PostProcessSettings
 {
   gradient: ColorGradient,
   view: vec4<f32>,
+  screen: vec2<f32>,
   time: f32,
   pulse: f32,
+  max_iter: u32,
+  substeps_sqrt: u32,
 }
 
 // Retrieves the settings from Rust
@@ -121,7 +123,7 @@ fn interpolate_color(val: f32) -> vec4<f32>
 // Smooths the color transition
 fn smoother(iter: u32, z: vec2<f32>) -> f32
 {
-  return clamp((f32(iter) - log2(max(1., log2(mod2(z))))) / f32(MAX_ITER), 0., 1.);
+  return clamp((f32(iter) - log2(max(1., log2(mod2(z))))) / f32(settings.max_iter), 0., 1.);
 }
 
 // Computes z² + c
@@ -138,19 +140,21 @@ fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4<f32>
 {
   // uv.y should be between 0 and 1 and be 0 at the bottom
   // in.uv.y is currently 0 at the top, so we need to invert it
-  var uv = vec2<f32>(in.uv.x, 1.0 - in.uv.y);
+  let uv = vec2<f32>(in.uv.x, 1.0 - in.uv.y);
 
   // complex number parameter:
   // (rotates on the circle of radius 0.8 for the animation effect):
   let c = vec2(
-    0.8 * cos(settings.time * settings.pulse), 
-    0.8 * sin(settings.time * settings.pulse)
+   0.8 * cos(settings.time * settings.pulse), 
+   0.8 * sin(settings.time * settings.pulse)
   );
 
   // compute border parameters
   let center = settings.view.xy;
   let width = settings.view.z;
   let height = settings.view.w;
+  let pixel_width = width / settings.screen.x;
+  let pixel_height = height / settings.screen.y;
 
   let top = center.y + height / 2.0;
   let bottom = center.y - height / 2.0;
@@ -158,17 +162,27 @@ fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4<f32>
   let right = center.x + width / 2.0;
 
   // now, compute the complex number corresponding to the pixel
-  var z = uv * vec2(right - left, top - bottom) + vec2(left, bottom);
-
-  // compute the julia set
-  var iter = 0u;
-  while (iter < MAX_ITER && mod2(z) < 4.0)
-  {
-    z = julia_next(z, c);
-    iter++;
-  }
-  let val = smoother(iter, z);
-  let color = interpolate_color(val);
+  let z = uv * vec2(right - left, top - bottom) + vec2(left, bottom);
   
-  return color;
+  // compute the julia set
+  var total_color = vec4<f32>(0.0, 0.0, 0.0, 0.0);
+  for (var i = 0u; i < settings.substeps_sqrt; i++) {
+    for (var j = 0u; j < settings.substeps_sqrt; j++) {
+      var sub_z = z + vec2(
+        pixel_width * (f32(i) / f32(settings.substeps_sqrt) - 0.5),
+        pixel_height * (f32(j) / f32(settings.substeps_sqrt) - 0.5)
+      );
+      var iter = 0u;
+      while (iter < settings.max_iter && mod2(sub_z) < 4.0)
+      {
+        sub_z = julia_next(sub_z, c);
+        iter++;
+      }
+      let val = smoother(iter, sub_z);
+      let color = interpolate_color(val);
+      total_color = total_color + color;
+    }
+  }
+    
+  return total_color / f32(settings.substeps_sqrt * settings.substeps_sqrt);
 }
