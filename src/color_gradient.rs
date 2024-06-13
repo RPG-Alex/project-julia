@@ -1,7 +1,7 @@
 use bevy::{prelude::*, render::render_resource::ShaderType};
 
 /// The maximum number of colors in a gradient. This has to be a multiple of 4
-/// to WGSL byte satisfy alignment rules more easily.
+/// to satisfy WGSL byte alignment rules more easily.
 pub const MAX_COLORS_GRADIENT: usize = 12;
 const N: usize = MAX_COLORS_GRADIENT; // Alias for simpler code below
 

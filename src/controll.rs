@@ -1,4 +1,5 @@
 use bevy::{
+  asset::{Assets, Handle},
   ecs::{
     event::EventReader,
     system::{Query, Res, ResMut, Resource},
@@ -11,7 +12,7 @@ use bevy::{
   window::{CursorIcon, CursorMoved, Window},
 };
 
-use crate::sets::julia::PostProcessSettings;
+use crate::sets::julia::JuliaMaterial;
 
 #[derive(Resource)]
 pub struct MouseState
@@ -21,20 +22,24 @@ pub struct MouseState
 
 pub fn zoom_with_mouse_wheel(
   mut scroll_events: EventReader<MouseWheel>,
-  mut settings: Query<&mut PostProcessSettings>,
+  julia_handles: Query<&Handle<JuliaMaterial>>,
+  mut julia_materials: ResMut<Assets<JuliaMaterial>>,
 )
 {
-  for mut settings in settings.iter_mut() {
+  for handle in julia_handles.iter() {
+    let material = julia_materials
+      .get_mut(handle)
+      .expect("Julia material not found");
     for event in scroll_events.read() {
       if event.y > 0.0 {
-        settings.view.w *= 0.9;
-        settings.view.z *= 0.9;
-        settings.max_iter += 3;
+        material.view.w *= 0.9;
+        material.view.z *= 0.9;
+        material.max_iter += 3;
       } else {
-        settings.view.w *= 1.1;
-        settings.view.z *= 1.1;
-        settings.max_iter -= 3;
-        settings.max_iter = settings.max_iter.max(100);
+        material.view.w *= 1.1;
+        material.view.z *= 1.1;
+        material.max_iter -= 3;
+        material.max_iter = material.max_iter.max(100);
       } // Zoom out
     }
   }
@@ -50,24 +55,28 @@ fn screen_position_to_complex(position: Vec2, screen: Vec2, view: Vec4) -> Vec2
 
 pub fn click_and_drag_with_mouse(
   mut mouse_event: EventReader<CursorMoved>,
-  mut settings: Query<&mut PostProcessSettings>,
+  julia_handles: Query<&Handle<JuliaMaterial>>,
   mut windows: Query<&mut Window>,
   mouse_click: Res<ButtonInput<MouseButton>>,
   mut mouse_state: ResMut<MouseState>,
+  mut julia_materials: ResMut<Assets<JuliaMaterial>>,
 )
 {
   if let Some(mut window) = windows.iter_mut().next() {
     for event in mouse_event.read() {
       if mouse_click.pressed(MouseButton::Left) {
         window.cursor.icon = CursorIcon::Move;
-        for mut setting in settings.iter_mut() {
+        for handle in julia_handles.iter() {
+          let material = julia_materials
+            .get_mut(handle)
+            .expect("Julia material not found");
           let complex_target =
-            screen_position_to_complex(mouse_state.position, setting.screen, setting.view);
+            screen_position_to_complex(mouse_state.position, material.screen, material.view);
           let current_mouse_complex =
-            screen_position_to_complex(event.position, setting.screen, setting.view);
+            screen_position_to_complex(event.position, material.screen, material.view);
           let complex_shift = complex_target - current_mouse_complex;
-          setting.view.x += complex_shift.x;
-          setting.view.y += complex_shift.y;
+          material.view.x += complex_shift.x;
+          material.view.y += complex_shift.y;
         }
       } else {
         window.cursor.icon = CursorIcon::Default;

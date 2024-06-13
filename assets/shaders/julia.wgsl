@@ -1,14 +1,20 @@
-// This shader computes the color of each pixel on the screen to render a julia set.
-// It is mostly copied from the bevy post_processing example.
-// Available here: https://github.com/bevyengine/bevy/blob/main/assets/shaders/post_processing.wgsl
+// This is a fragment shader, a shader that computes the color of each pixel 
+// on the screen to render a julia set. 
+
+// To be exact, a triangle's data is first sent to a vertex shader (handled 
+// by bevy in this case). For each vertex, the v-shader's main function outputs
+// a struct that will come as an input here. In fact, the values of each outputed field
+// of the struct are interpolated between the vertices. This is done under the 
+// hood by graphics APIs. Here, what we will have is a VertexOutput, defined by bevy
+// in <https://github.com/bevyengine/bevy/blob/main/crates/bevy_pbr/src/render/forward_io.wgsl>.
 
 // It is written in WGSL, a minimalist Rust-like language that can be read by the GPU.
 // It is also possible to use the more popular C++-like GLSL language if needed.
 
 // Guide:
-// 1. #import a struct we will need
+// 1. #import the struct outputed by the vertex shader (VertexOutput)
 // 2. Define some constants
-// 3. Define and retrieve data structures from Rust
+// 3. Define and retrieve data from Rust
 // 4. Define some utility functions
 // 5. Define the main function (fragment)
 
@@ -16,11 +22,7 @@
 
 /* Imports */
 
-// This struct that the main function will use contains the UV position of the pixel.
-// It specifically contains a uv field which is a vec2<f32> that contains 
-// the position of the pixel on the screen. The top left corner of the screen is (0, 0)
-// and the bottom right corner is (1, 1).
-#import bevy_core_pipeline::fullscreen_vertex_shader::FullscreenVertexOutput
+#import bevy_pbr::forward_io::VertexOutput;
 
 /* Constants */
 
@@ -34,20 +36,16 @@ struct ColorGradient
   size: u32,
 }
 
-// matches sets::julia::PostProcessSettings
-struct PostProcessSettings 
-{
-  gradient: ColorGradient,
-  view: vec4<f32>,
-  screen: vec2<f32>,
-  time: f32,
-  pulse: f32,
-  max_iter: u32,
-  substeps_sqrt: u32,
-}
-
-// Retrieves the settings from Rust
-@group(0) @binding(0) var<uniform> settings: PostProcessSettings;
+// Retrieves the settings from Rust. @group(2) is necessary when
+// dealing with bevy's MaterialPlugins. @binding(x) corresponds
+// to #[uniform(x)] in Rust.
+@group(2) @binding(0) var<uniform> gradient: ColorGradient;
+@group(2) @binding(1) var<uniform> view: vec4<f32>;
+@group(2) @binding(2) var<uniform> screen: vec2<f32>;
+@group(2) @binding(3) var<uniform> time: f32;
+@group(2) @binding(4) var<uniform> pulse: f32;
+@group(2) @binding(5) var<uniform> max_iter: u32;
+@group(2) @binding(6) var<uniform> substeps_sqrt: u32;
 
 /* Utility functions */
 
@@ -58,18 +56,18 @@ fn get_tres(index: u32) -> f32
   // WGSL does not support indexing an array by a non const variable
   switch(index)
   {
-    case 0u: {return settings.gradient.tresholds[0u][0];}
-    case 1u: {return settings.gradient.tresholds[0u][1];}
-    case 2u: {return settings.gradient.tresholds[0u][2];}
-    case 3u: {return settings.gradient.tresholds[0u][3];}
-    case 4u: {return settings.gradient.tresholds[1u][0];}
-    case 5u: {return settings.gradient.tresholds[1u][1];}
-    case 6u: {return settings.gradient.tresholds[1u][2];}
-    case 7u: {return settings.gradient.tresholds[1u][3];}
-    case 8u: {return settings.gradient.tresholds[2u][0];}
-    case 9u: {return settings.gradient.tresholds[2u][1];}
-    case 10u: {return settings.gradient.tresholds[2u][2];}
-    case 11u: {return settings.gradient.tresholds[2u][3];}
+    case 0u: {return gradient.tresholds[0u][0];}
+    case 1u: {return gradient.tresholds[0u][1];}
+    case 2u: {return gradient.tresholds[0u][2];}
+    case 3u: {return gradient.tresholds[0u][3];}
+    case 4u: {return gradient.tresholds[1u][0];}
+    case 5u: {return gradient.tresholds[1u][1];}
+    case 6u: {return gradient.tresholds[1u][2];}
+    case 7u: {return gradient.tresholds[1u][3];}
+    case 8u: {return gradient.tresholds[2u][0];}
+    case 9u: {return gradient.tresholds[2u][1];}
+    case 10u: {return gradient.tresholds[2u][2];}
+    case 11u: {return gradient.tresholds[2u][3];}
     default: {return 0.;}
   }
 }
@@ -80,18 +78,18 @@ fn get_col(index: u32) -> vec4<f32>
   // Same as above
   switch(index)
   {
-    case 0u: {return settings.gradient.colors[0u];}
-    case 1u: {return settings.gradient.colors[1u];}
-    case 2u: {return settings.gradient.colors[2u];}
-    case 3u: {return settings.gradient.colors[3u];}
-    case 4u: {return settings.gradient.colors[4u];}
-    case 5u: {return settings.gradient.colors[5u];}
-    case 6u: {return settings.gradient.colors[6u];}
-    case 7u: {return settings.gradient.colors[7u];}
-    case 8u: {return settings.gradient.colors[8u];}
-    case 9u: {return settings.gradient.colors[9u];}
-    case 10u: {return settings.gradient.colors[10u];}
-    case 11u: {return settings.gradient.colors[11u];}
+    case 0u: {return gradient.colors[0u];}
+    case 1u: {return gradient.colors[1u];}
+    case 2u: {return gradient.colors[2u];}
+    case 3u: {return gradient.colors[3u];}
+    case 4u: {return gradient.colors[4u];}
+    case 5u: {return gradient.colors[5u];}
+    case 6u: {return gradient.colors[6u];}
+    case 7u: {return gradient.colors[7u];}
+    case 8u: {return gradient.colors[8u];}
+    case 9u: {return gradient.colors[9u];}
+    case 10u: {return gradient.colors[10u];}
+    case 11u: {return gradient.colors[11u];}
     default: {return vec4<f32>(0., 0., 0., 1.);}
   }
 }
@@ -105,9 +103,9 @@ fn mod2(a: vec2<f32>) -> f32
 // Inputs a float between 0 and 1 and outputs the corresponding color in RGBA format
 fn interpolate_color(val: f32) -> vec4<f32>
 {
-  let size = settings.gradient.size;
-  let tresholds = settings.gradient.tresholds;
-  let colors = settings.gradient.colors;
+  let size = gradient.size;
+  let tresholds = gradient.tresholds;
+  let colors = gradient.colors;
   if (val < tresholds[0u][0u]) {return colors[0u];}
   for (var i = 0u; i < size - 1u; i++)
   {
@@ -123,7 +121,7 @@ fn interpolate_color(val: f32) -> vec4<f32>
 // Smooths the color transition
 fn smoother(iter: u32, z: vec2<f32>) -> f32
 {
-  return clamp((f32(iter) - log2(max(1., log2(mod2(z))))) / f32(settings.max_iter), 0., 1.);
+  return clamp((f32(iter) - log2(max(1., log2(mod2(z))))) / f32(max_iter), 0., 1.);
 }
 
 // Computes z² + c
@@ -136,7 +134,7 @@ fn julia_next(z: vec2<f32>, c: vec2<f32>) -> vec2<f32>
 // information contained in FullscreenVertexOutput
 // and returns the color of the pixel in a RGBA format.
 @fragment
-fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4<f32> 
+fn fragment(in: VertexOutput) -> @location(0) vec4<f32> 
 {
   // uv.y should be between 0 and 1 and be 0 at the bottom
   // in.uv.y is currently 0 at the top, so we need to invert it
@@ -145,16 +143,16 @@ fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4<f32>
   // complex number parameter:
   // (rotates on the circle of radius 0.8 for the animation effect):
   let c = vec2(
-   0.8 * cos(settings.time * settings.pulse), 
-   0.8 * sin(settings.time * settings.pulse)
+   0.8 * cos(time * pulse), 
+   0.8 * sin(time * pulse)
   );
 
   // compute border parameters
-  let center = settings.view.xy;
-  let width = settings.view.z;
-  let height = settings.view.w;
-  let pixel_width = width / settings.screen.x;
-  let pixel_height = height / settings.screen.y;
+  let center = view.xy;
+  let width = view.z;
+  let height = view.w;
+  let pixel_width = width / screen.x;
+  let pixel_height = height / screen.y;
 
   let top = center.y + height / 2.0;
   let bottom = center.y - height / 2.0;
@@ -166,14 +164,14 @@ fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4<f32>
   
   // compute the julia set
   var total_color = vec4<f32>(0.0, 0.0, 0.0, 0.0);
-  for (var i = 0u; i < settings.substeps_sqrt; i++) {
-    for (var j = 0u; j < settings.substeps_sqrt; j++) {
+  for (var i = 0u; i < substeps_sqrt; i++) {
+    for (var j = 0u; j < substeps_sqrt; j++) {
       var sub_z = z + vec2(
-        pixel_width * (f32(i) / f32(settings.substeps_sqrt) - 0.5),
-        pixel_height * (f32(j) / f32(settings.substeps_sqrt) - 0.5)
+        pixel_width * (f32(i) / f32(substeps_sqrt) - 0.5),
+        pixel_height * (f32(j) / f32(substeps_sqrt) - 0.5)
       );
       var iter = 0u;
-      while (iter < settings.max_iter && mod2(sub_z) < 4.0)
+      while (iter < max_iter && mod2(sub_z) < 4.0)
       {
         sub_z = julia_next(sub_z, c);
         iter++;
@@ -184,5 +182,5 @@ fn fragment(in: FullscreenVertexOutput) -> @location(0) vec4<f32>
     }
   }
     
-  return total_color / f32(settings.substeps_sqrt * settings.substeps_sqrt);
+  return total_color / f32(substeps_sqrt * substeps_sqrt);
 }

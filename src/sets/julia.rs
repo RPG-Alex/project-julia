@@ -1,205 +1,109 @@
-//! This code is mostly copied from the bevy example `post_processing.rs` and
-//! modified to use a custom shader. This example is available at <https://github.com/bevyengine/bevy/blob/main/examples/shader/post_processing.rs>
-//! Most of the unecessary boilerplate code as well as comments have been
-//! removed for brevity. Some comments were added for parts that were modified
-//! or for some parts that seem to be important, such as the shader loading and
-//! the `PostProcessSettings` component.
-
 use bevy::{
-  core_pipeline::{
-    core_2d::graph::{Core2d, Node2d},
-    fullscreen_vertex_shader::fullscreen_shader_vertex_state,
-  },
-  ecs::query::QueryItem,
-  prelude::*,
+  asset::{Asset, Assets, Handle},
+  math::{Vec2, Vec3, Vec4},
+  prelude::{Camera2dBundle, Commands, Component, EventReader, Query, Res, ResMut},
+  reflect::TypePath,
   render::{
-    extract_component::{
-      ComponentUniforms, ExtractComponent, ExtractComponentPlugin, UniformComponentPlugin,
-    },
-    render_graph::{
-      NodeRunError, RenderGraphApp, RenderGraphContext, RenderLabel, ViewNode, ViewNodeRunner,
-    },
-    render_resource::{binding_types::uniform_buffer, *},
-    renderer::{RenderContext, RenderDevice},
-    texture::BevyDefault,
-    view::ViewTarget,
-    RenderApp,
+    mesh::{Indices, Mesh, PrimitiveTopology},
+    render_asset::RenderAssetUsages,
+    render_resource::{AsBindGroup, ShaderRef},
   },
+  sprite::{Material2d, MaterialMesh2dBundle},
+  time::Time,
+  transform::components::Transform,
+  utils::default,
   window::WindowResized,
 };
 
 use crate::color_gradient;
 
-pub struct PostProcessPlugin;
-
-impl Plugin for PostProcessPlugin
-{
-  fn build(&self, app: &mut App)
-  {
-    app.add_plugins((
-      ExtractComponentPlugin::<PostProcessSettings>::default(),
-      UniformComponentPlugin::<PostProcessSettings>::default(),
-    ));
-    let Ok(render_app) = app.get_sub_app_mut(RenderApp) else {
-      return;
-    };
-    render_app
-      .add_render_graph_node::<ViewNodeRunner<PostProcessNode>>(Core2d, PostProcessLabel)
-      .add_render_graph_edges(
-        Core2d,
-        (Node2d::Tonemapping, PostProcessLabel, Node2d::EndMainPassPostProcessing),
-      );
-  }
-
-  fn finish(&self, app: &mut App)
-  {
-    let Ok(render_app) = app.get_sub_app_mut(RenderApp) else {
-      return;
-    };
-    render_app.init_resource::<PostProcessPipeline>();
-  }
-}
-
-#[derive(Debug, Hash, PartialEq, Eq, Clone, RenderLabel)]
-struct PostProcessLabel;
-
-#[derive(Default)]
-struct PostProcessNode;
-
-impl ViewNode for PostProcessNode
-{
-  type ViewQuery = (&'static ViewTarget, &'static PostProcessSettings);
-
-  fn run(
-    &self,
-    _graph: &mut RenderGraphContext,
-    render_context: &mut RenderContext,
-    (view_target, _post_process_settings): QueryItem<Self::ViewQuery>,
-    world: &World,
-  ) -> Result<(), NodeRunError>
-  {
-    let post_process_pipeline = world.resource::<PostProcessPipeline>();
-    let pipeline_cache = world.resource::<PipelineCache>();
-    let Some(pipeline) = pipeline_cache.get_render_pipeline(post_process_pipeline.pipeline_id)
-    else {
-      return Ok(());
-    };
-    let settings_uniform = world.resource::<ComponentUniforms<PostProcessSettings>>();
-    let Some(settings_binding) = settings_uniform.binding() else {
-      return Ok(());
-    };
-    let post_process = view_target.post_process_write();
-    let bind_group = render_context.render_device().create_bind_group(
-      "post_process_bind_group",
-      &post_process_pipeline.layout,
-      // To send more data to the shader, add more entries here and in the
-      // PostProcessPipeline::from_world function.
-      &BindGroupEntries::sequential((settings_binding.clone(),)),
-    );
-    let mut render_pass = render_context.begin_tracked_render_pass(RenderPassDescriptor {
-      label:                    Some("post_process_pass"),
-      color_attachments:        &[Some(RenderPassColorAttachment {
-        view:           post_process.destination,
-        resolve_target: None,
-        ops:            Operations::default(),
-      })],
-      depth_stencil_attachment: None,
-      timestamp_writes:         None,
-      occlusion_query_set:      None,
-    });
-    render_pass.set_render_pipeline(pipeline);
-    render_pass.set_bind_group(0, &bind_group, &[]);
-    render_pass.draw(0..3, 0..1);
-    Ok(())
-  }
-}
-
-#[derive(Resource)]
-struct PostProcessPipeline
-{
-  layout:      BindGroupLayout,
-  pipeline_id: CachedRenderPipelineId,
-}
-
-impl FromWorld for PostProcessPipeline
-{
-  fn from_world(world: &mut World) -> Self
-  {
-    let render_device = world.resource::<RenderDevice>();
-    let layout = render_device.create_bind_group_layout(
-      "post_process_bind_group_layout",
-      &BindGroupLayoutEntries::sequential(
-        ShaderStages::FRAGMENT,
-        // To send more data to the shader, add more entries here
-        // and in the PostProcessNode::run function.
-        (uniform_buffer::<PostProcessSettings>(false),),
-      ),
-    );
-    // Load the shader here
-    let shader = world.resource::<AssetServer>().load("shaders/julia.wgsl");
-    let pipeline_id =
-      world
-        .resource_mut::<PipelineCache>()
-        .queue_render_pipeline(RenderPipelineDescriptor {
-          label:                Some("post_process_pipeline".into()),
-          layout:               vec![layout.clone()],
-          vertex:               fullscreen_shader_vertex_state(),
-          fragment:             Some(FragmentState {
-            shader,
-            shader_defs: vec![],
-            entry_point: "fragment".into(),
-            targets: vec![Some(ColorTargetState {
-              format:     TextureFormat::bevy_default(),
-              blend:      None,
-              write_mask: ColorWrites::ALL,
-            })],
-          }),
-          primitive:            PrimitiveState::default(),
-          depth_stencil:        None,
-          multisample:          MultisampleState::default(),
-          push_constant_ranges: vec![],
-        });
-
-    Self {
-      layout,
-      pipeline_id,
-    }
-  }
-}
-
 /// This is the component that will get passed to the shader.
-/// The WGSL script contains a struct with the same name and fields.
-#[derive(Component, Default, Clone, Copy, ExtractComponent, ShaderType)]
-pub struct PostProcessSettings
+/// The WGSL script contains the same fields.
+#[derive(Asset, TypePath, AsBindGroup, Debug, Clone, Component)]
+pub struct JuliaMaterial
 {
-  /// The color gradient to use for coloring the julia set.
+  // The color gradient to use for coloring the julia set.
+  #[uniform(0)]
   pub gradient:      color_gradient::ColorGradient,
-  // The view is a vec4 with the x and y being the position of the camera on the complex plane
-  // and the z and w being the width and height of the camera on the complex plane.
+  // The view is a vec4 with the x and y being the position of the camera on
+  // the complex plane and the z and w being the width and height of the
+  // camera on the complex plane.
+  #[uniform(1)]
   pub view:          Vec4,
-  // The screen is a vec2 with the x and y being the width and height of the screen.
+  // The screen is a vec2 with the x and y being the width and height of the
+  // screen.
+  #[uniform(2)]
   pub screen:        Vec2,
-  // time in seconds since the start of the program.
+  // Time in seconds since the start of the program.
+  #[uniform(3)]
   pub time:          f32,
-  // defines the speed of the animation
+  // Defines the speed of the animation
+  #[uniform(4)]
   pub pulse:         f32,
   // The maximum number of iterations to calculate the julia set.
   // Should change with the zoom level.
+  #[uniform(5)]
   pub max_iter:      u32,
   // Square root of the number of substeps to reduce the aliasing.
+  #[uniform(6)]
   pub substeps_sqrt: u32,
 }
 
-/// Setup the camera and the settings
-pub fn setup(mut commands: Commands)
+impl Material2d for JuliaMaterial
 {
-  // camera
-  commands.spawn((
-    Camera2dBundle::default(),
-    // Add the setting to the camera.
-    // This component is also used to determine on which camera
-    // to run the post processing effect.
-    PostProcessSettings {
+  fn fragment_shader() -> ShaderRef { "shaders/julia.wgsl".into() }
+}
+
+/// Creates a triangle mesh that will cover the entire screen and attaches a
+/// JuliaMaterial to it. The fractal animation will play on the triangle.
+pub fn create_julia_triangle(
+  mut commands: Commands,
+  mut meshes: ResMut<Assets<Mesh>>,
+  mut materials: ResMut<Assets<JuliaMaterial>>,
+)
+{
+  // The triangle that will cover the screen.
+  let mut triangle = Mesh::new(
+    PrimitiveTopology::TriangleList,
+    RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
+  );
+
+  // This function produces the following triangle, once it is scaled correctly:
+  //
+  //  1 |  0-----x.....2
+  //  0 |  |  s  |  . ´
+  // -1 |  x_____x´
+  // -2 |  :  .´
+  // -3 |  1´
+  //    +---------------
+  //      -1  0  1  2  3
+  //
+  // The axes are clip-space x and y. The region marked s is the visible region.
+  // The digits in the corners of the right-angled triangle are the vertex
+  // indices.
+  //
+  // The top-left has UV 0,0, the bottom-left has 0,2, and the top-right has 2,0.
+  // This means that the UV gets interpolated to 1,1 at the bottom-right corner
+  // of the clip-space rectangle that is at 1,-1 in clip space.
+
+  // Vertices positions relative to center, in pixels. The triangle will be
+  // rescaled in `update_julia_triangle` to cover the screen.
+  triangle.insert_attribute(
+    Mesh::ATTRIBUTE_POSITION,
+    vec![[-1.0, 1.0, 0.0], [-1.0, -3.0, 0.0], [3.0, 1.0, 0.0]],
+  );
+
+  // UVs for the vertices.
+  triangle.insert_attribute(Mesh::ATTRIBUTE_UV_0, vec![[0.0, 0.0], [0.0, 2.0], [2.0, 0.0]]);
+
+  // Connection of the vertices to form triangles.
+  triangle.insert_indices(Indices::U32(vec![0, 1, 2]));
+
+  commands.spawn(Camera2dBundle::default());
+  // Spawn a bundle that contains the julia material and the triangle all in one.
+  commands.spawn(MaterialMesh2dBundle {
+    mesh: meshes.add(triangle).into(),
+    material: materials.add(JuliaMaterial {
       gradient:      color_gradient::DEFAULT_COLOR_GRADIENT,
       view:          Vec4::new(0.0, 0.0, 2.0, 2.0),
       screen:        Vec2::new(800.0, 800.0),
@@ -207,26 +111,34 @@ pub fn setup(mut commands: Commands)
       pulse:         0.1,
       max_iter:      150,
       substeps_sqrt: 4,
-    },
-  ));
+    }),
+    ..default()
+  });
 }
 
-/// Updates the settings every frame. This function can be used as a template
-/// for interactive communication with the shader and therefore implementing the
-/// UI.
-pub fn resize_window(
-  mut settings: Query<&mut PostProcessSettings>,
+/// Updates the julia material with the current time and aspect ratio. Scales
+/// the screen covering triangle on the way.
+pub fn update_julia_triangle(
+  mut julias: Query<(&Handle<JuliaMaterial>, &mut Transform)>,
+  mut julia_materials: ResMut<Assets<JuliaMaterial>>,
   time: Res<Time>,
   mut resize_reader: EventReader<WindowResized>,
 )
 {
-  for mut settings in settings.iter_mut() {
-    settings.time = time.elapsed_seconds();
-    // The following triggers on window resize and updates the aspect ratio
+  for (handle, mut transform) in julias.iter_mut() {
+    let material = julia_materials
+      .get_mut(handle)
+      .expect("Julia material not found");
+
+    // Update the time in the material.
+    material.time = time.elapsed_seconds();
     for e in resize_reader.read() {
-      settings.screen = Vec2::new(e.width, e.height);
+      // Update the screen size in the material.
+      material.screen = Vec2::new(e.width, e.height);
+      // Scale the triangle to cover the screen.
+      transform.scale = Vec3::new(e.width * 0.5f32, e.height * 0.5f32, 1.0f32);
       // Adapt to the new aspect ratio with fixed height
-      settings.view.z = settings.view.w * e.width / e.height;
+      material.view.z = material.view.w * e.width / e.height;
     }
   }
 }
