@@ -1,7 +1,7 @@
 use bevy::{
-  asset::{Asset, Assets, Handle},
-  math::{Vec2, Vec3, Vec4},
-  prelude::{Camera2dBundle, Commands, Component, EventReader, Query, Res, ResMut},
+  asset::{Asset, Assets},
+  math::{Vec2, Vec4},
+  prelude::{Camera2dBundle, Commands, Component, ResMut},
   reflect::TypePath,
   render::{
     mesh::{Indices, Mesh, PrimitiveTopology},
@@ -9,13 +9,10 @@ use bevy::{
     render_resource::{AsBindGroup, ShaderRef},
   },
   sprite::{Material2d, MaterialMesh2dBundle},
-  time::Time,
-  transform::components::Transform,
   utils::default,
-  window::WindowResized,
 };
 
-use crate::color_gradient;
+use crate::{color_gradient, traits::FractalMaterial2d};
 
 /// This is the component that will get passed to the shader.
 /// The WGSL script contains the same fields.
@@ -49,18 +46,79 @@ pub struct JuliaMaterial
   pub substeps_sqrt: u32,
 }
 
+impl Default for JuliaMaterial
+{
+  fn default() -> Self
+  {
+    Self {
+      gradient:      color_gradient::DEFAULT_COLOR_GRADIENT,
+      view:          Vec4::new(0.0, 0.0, 2.0, 2.0),
+      screen:        Vec2::new(800.0, 800.0),
+      time:          0.0,
+      pulse:         0.1,
+      max_iter:      150,
+      substeps_sqrt: 4,
+    }
+  }
+}
+
 impl Material2d for JuliaMaterial
 {
   fn fragment_shader() -> ShaderRef { "shaders/julia.wgsl".into() }
 }
 
+impl FractalMaterial2d for JuliaMaterial
+{
+  fn zoom_in(&mut self) -> &mut Self
+  {
+    self.view.w *= 0.9;
+    self.view.z *= 0.9;
+    self.max_iter += 3;
+    self
+  }
+
+  fn zoom_out(&mut self) -> &mut Self
+  {
+    self.view.w *= 1.1;
+    self.view.z *= 1.1;
+    self.max_iter -= 3;
+    self.max_iter = self.max_iter.max(100);
+    self
+  }
+
+  fn translate(&mut self, direction: Vec2) -> &mut Self
+  {
+    let complex_dir = Vec2::new(
+      direction.x / self.screen.x * self.view.z,
+      -direction.y / self.screen.y * self.view.w,
+    );
+    self.view.x += complex_dir.x;
+    self.view.y += complex_dir.y;
+    self
+  }
+
+  fn resize_screen(&mut self, width: f32, height: f32) -> &mut Self
+  {
+    self.screen = Vec2::new(width, height);
+    self.view.z = self.view.w * width / height;
+    self
+  }
+
+  fn set_timer(&mut self, time: f32) -> &mut Self
+  {
+    self.time = time;
+    self
+  }
+}
+
 /// Creates a triangle mesh that will cover the entire screen and attaches a
 /// JuliaMaterial to it. The fractal animation will play on the triangle.
-pub fn create_julia_triangle(
+pub fn create_screen_covering_triangle<M>(
   mut commands: Commands,
   mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<JuliaMaterial>>,
-)
+  mut materials: ResMut<Assets<M>>,
+) where
+  M: FractalMaterial2d,
 {
   // The triangle that will cover the screen.
   let mut triangle = Mesh::new(
@@ -103,42 +161,7 @@ pub fn create_julia_triangle(
   // Spawn a bundle that contains the julia material and the triangle all in one.
   commands.spawn(MaterialMesh2dBundle {
     mesh: meshes.add(triangle).into(),
-    material: materials.add(JuliaMaterial {
-      gradient:      color_gradient::DEFAULT_COLOR_GRADIENT,
-      view:          Vec4::new(0.0, 0.0, 2.0, 2.0),
-      screen:        Vec2::new(800.0, 800.0),
-      time:          0.0,
-      pulse:         0.1,
-      max_iter:      150,
-      substeps_sqrt: 4,
-    }),
+    material: materials.add(M::default()),
     ..default()
   });
-}
-
-/// Updates the julia material with the current time and aspect ratio. Scales
-/// the screen covering triangle on the way.
-pub fn update_julia_triangle(
-  mut julias: Query<(&Handle<JuliaMaterial>, &mut Transform)>,
-  mut julia_materials: ResMut<Assets<JuliaMaterial>>,
-  time: Res<Time>,
-  mut resize_reader: EventReader<WindowResized>,
-)
-{
-  for (handle, mut transform) in julias.iter_mut() {
-    let material = julia_materials
-      .get_mut(handle)
-      .expect("Julia material not found");
-
-    // Update the time in the material.
-    material.time = time.elapsed_seconds();
-    for e in resize_reader.read() {
-      // Update the screen size in the material.
-      material.screen = Vec2::new(e.width, e.height);
-      // Scale the triangle to cover the screen.
-      transform.scale = Vec3::new(e.width * 0.5f32, e.height * 0.5f32, 1.0f32);
-      // Adapt to the new aspect ratio with fixed height
-      material.view.z = material.view.w * e.width / e.height;
-    }
-  }
 }
