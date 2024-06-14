@@ -1,3 +1,4 @@
+use crate::traits::FractalMaterial2d;
 use bevy::{
   app::{App, Plugin, Startup, Update},
   asset::Assets,
@@ -9,8 +10,7 @@ use bevy::{
   },
   sprite::{Material2dPlugin, MaterialMesh2dBundle},
 };
-
-use crate::traits::FractalMaterial2d;
+use std::hash::Hash;
 
 /// A plugin that will create a fractal animation in 2D, covering the whole
 /// screen. The fractal material must implement the FractalMaterial2d trait.
@@ -23,7 +23,7 @@ pub struct FractalPlugin2d<M>
 impl<M> Plugin for FractalPlugin2d<M>
 where
   M: FractalMaterial2d + AsBindGroup,
-  <M as AsBindGroup>::Data: PartialEq + Eq + std::hash::Hash + Clone,
+  <M as AsBindGroup>::Data: PartialEq + Eq + Hash + Clone,
 {
   fn build(&self, app: &mut App)
   {

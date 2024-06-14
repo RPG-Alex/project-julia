@@ -1,4 +1,8 @@
-use bevy::{prelude::*, render::render_resource::ShaderType};
+use bevy::{
+  math::Vec4,
+  prelude::Resource,
+  render::{color::Color, render_resource::ShaderType},
+};
 
 /// The maximum number of colors in a gradient. This has to be a multiple of 4
 /// to satisfy WGSL byte alignment rules more easily.

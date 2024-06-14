@@ -1,3 +1,4 @@
+use crate::traits::FractalMaterial2d;
 use bevy::{
   asset::{Assets, Handle},
   ecs::{
@@ -13,8 +14,6 @@ use bevy::{
   transform::components::Transform,
   window::{CursorIcon, CursorMoved, Window, WindowResized},
 };
-
-use crate::traits::FractalMaterial2d;
 
 #[derive(Resource)]
 pub struct MouseState

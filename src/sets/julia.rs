@@ -1,3 +1,4 @@
+use crate::{color_gradient, traits::FractalMaterial2d};
 use bevy::{
   asset::Asset,
   math::{Vec2, Vec4},
@@ -6,8 +7,6 @@ use bevy::{
   render::render_resource::{AsBindGroup, ShaderRef},
   sprite::Material2d,
 };
-
-use crate::{color_gradient, traits::FractalMaterial2d};
 
 /// This is the component that will get passed to the shader.
 /// The WGSL script contains the same fields.
