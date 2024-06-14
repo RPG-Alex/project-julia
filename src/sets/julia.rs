@@ -1,15 +1,10 @@
 use bevy::{
-  asset::{Asset, Assets},
+  asset::Asset,
   math::{Vec2, Vec4},
-  prelude::{Camera2dBundle, Commands, Component, ResMut},
+  prelude::Component,
   reflect::TypePath,
-  render::{
-    mesh::{Indices, Mesh, PrimitiveTopology},
-    render_asset::RenderAssetUsages,
-    render_resource::{AsBindGroup, ShaderRef},
-  },
-  sprite::{Material2d, MaterialMesh2dBundle},
-  utils::default,
+  render::render_resource::{AsBindGroup, ShaderRef},
+  sprite::Material2d,
 };
 
 use crate::{color_gradient, traits::FractalMaterial2d};
@@ -109,59 +104,4 @@ impl FractalMaterial2d for JuliaMaterial
     self.time = time;
     self
   }
-}
-
-/// Creates a triangle mesh that will cover the entire screen and attaches a
-/// JuliaMaterial to it. The fractal animation will play on the triangle.
-pub fn create_screen_covering_triangle<M>(
-  mut commands: Commands,
-  mut meshes: ResMut<Assets<Mesh>>,
-  mut materials: ResMut<Assets<M>>,
-) where
-  M: FractalMaterial2d,
-{
-  // The triangle that will cover the screen.
-  let mut triangle = Mesh::new(
-    PrimitiveTopology::TriangleList,
-    RenderAssetUsages::RENDER_WORLD | RenderAssetUsages::MAIN_WORLD,
-  );
-
-  // This function produces the following triangle, once it is scaled correctly:
-  //
-  //  1 |  0-----x.....2
-  //  0 |  |  s  |  . ´
-  // -1 |  x_____x´
-  // -2 |  :  .´
-  // -3 |  1´
-  //    +---------------
-  //      -1  0  1  2  3
-  //
-  // The axes are clip-space x and y. The region marked s is the visible region.
-  // The digits in the corners of the right-angled triangle are the vertex
-  // indices.
-  //
-  // The top-left has UV 0,0, the bottom-left has 0,2, and the top-right has 2,0.
-  // This means that the UV gets interpolated to 1,1 at the bottom-right corner
-  // of the clip-space rectangle that is at 1,-1 in clip space.
-
-  // Vertices positions relative to center, in pixels. The triangle will be
-  // rescaled in `update_julia_triangle` to cover the screen.
-  triangle.insert_attribute(
-    Mesh::ATTRIBUTE_POSITION,
-    vec![[-1.0, 1.0, 0.0], [-1.0, -3.0, 0.0], [3.0, 1.0, 0.0]],
-  );
-
-  // UVs for the vertices.
-  triangle.insert_attribute(Mesh::ATTRIBUTE_UV_0, vec![[0.0, 0.0], [0.0, 2.0], [2.0, 0.0]]);
-
-  // Connection of the vertices to form triangles.
-  triangle.insert_indices(Indices::U32(vec![0, 1, 2]));
-
-  commands.spawn(Camera2dBundle::default());
-  // Spawn a bundle that contains the julia material and the triangle all in one.
-  commands.spawn(MaterialMesh2dBundle {
-    mesh: meshes.add(triangle).into(),
-    material: materials.add(M::default()),
-    ..default()
-  });
 }
