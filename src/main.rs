@@ -1,5 +1,5 @@
 mod color_gradient;
-mod controll;
+mod control;
 mod fractal_plugin;
 mod sets;
 mod traits;
@@ -13,7 +13,7 @@ fn main()
   App::new()
     .add_plugins(DefaultPlugins)
     .add_plugins(FractalPlugin2d::<JuliaMaterial>::default())
-    .insert_resource(controll::MouseState {
+    .insert_resource(control::MouseState {
       position: Vec2::ZERO,
     })
     .run();

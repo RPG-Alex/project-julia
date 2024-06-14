@@ -32,9 +32,9 @@ where
       .add_systems(
         Update,
         (
-          crate::controll::update_fractal_material::<M>,
-          crate::controll::zoom_with_mouse_wheel::<M>,
-          crate::controll::click_and_drag_with_mouse::<M>,
+          crate::control::update_fractal_material::<M>,
+          crate::control::zoom_with_mouse_wheel::<M>,
+          crate::control::click_and_drag_with_mouse::<M>,
         ),
       );
   }
