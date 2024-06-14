@@ -2,7 +2,7 @@ use crate::traits::FractalMaterial2d;
 use bevy::{
   app::{App, Plugin, Startup, Update},
   asset::Assets,
-  prelude::{default, Camera2dBundle, Commands, ResMut},
+  prelude::{default, Commands, ResMut},
   render::{
     mesh::{Indices, Mesh, PrimitiveTopology},
     render_asset::RenderAssetUsages,
@@ -90,7 +90,6 @@ fn create_screen_covering_triangle<M>(
   // Connection of the vertices to form triangles.
   triangle.insert_indices(Indices::U32(vec![0, 1, 2]));
 
-  commands.spawn(Camera2dBundle::default());
   // Spawn a bundle that contains the fractal material and the triangle all in
   // one.
   commands.spawn(MaterialMesh2dBundle {
