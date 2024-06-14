@@ -14,29 +14,29 @@ use crate::{color_gradient, traits::FractalMaterial2d};
 #[derive(Asset, TypePath, AsBindGroup, Debug, Clone, Component)]
 pub struct JuliaMaterial
 {
-  // The color gradient to use for coloring the julia set.
+  /// The color gradient to use for coloring the julia set.
   #[uniform(0)]
   pub gradient:      color_gradient::ColorGradient,
-  // The view is a vec4 with the x and y being the position of the camera on
-  // the complex plane and the z and w being the width and height of the
-  // camera on the complex plane.
+  /// The view is a vec4 with the x and y being the position of the camera on
+  /// the complex plane and the z and w being the width and height of the
+  /// camera on the complex plane.
   #[uniform(1)]
   pub view:          Vec4,
-  // The screen is a vec2 with the x and y being the width and height of the
-  // screen.
+  /// The screen is a vec2 with the x and y being the width and height of the
+  /// screen.
   #[uniform(2)]
   pub screen:        Vec2,
-  // Time in seconds since the start of the program.
+  /// Time in seconds since the start of the program.
   #[uniform(3)]
   pub time:          f32,
-  // Defines the speed of the animation
+  /// Defines the speed of the animation
   #[uniform(4)]
   pub pulse:         f32,
-  // The maximum number of iterations to calculate the julia set.
-  // Should change with the zoom level.
+  /// The maximum number of iterations to calculate the julia set.
+  /// Should change with the zoom level.
   #[uniform(5)]
   pub max_iter:      u32,
-  // Square root of the number of substeps to reduce the aliasing.
+  /// Square root of the number of substeps to reduce the aliasing.
   #[uniform(6)]
   pub substeps_sqrt: u32,
 }
